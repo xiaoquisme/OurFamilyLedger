@@ -69,6 +69,68 @@ final class OpenAIService: AIServiceProtocol {
         return true
     }
 
+    func fetchModels() async throws -> [AIModel] {
+        guard !config.apiKey.isEmpty else {
+            throw AIServiceError.noAPIKey
+        }
+
+        let url = URL(string: "\(config.endpoint)/models")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AIServiceError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200...299:
+            break
+        case 401:
+            throw AIServiceError.unauthorized
+        case 429:
+            throw AIServiceError.rateLimited
+        default:
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw AIServiceError.parseError("HTTP \(httpResponse.statusCode): \(errorMessage)")
+        }
+
+        // 解析响应
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            throw AIServiceError.invalidResponse
+        }
+
+        var models: [AIModel] = []
+        for modelData in modelsData {
+            if let id = modelData["id"] as? String {
+                let ownedBy = modelData["owned_by"] as? String
+                models.append(AIModel(id: id, ownedBy: ownedBy))
+            }
+        }
+
+        // 按 ID 排序，优先显示常用模型
+        return models.sorted { m1, m2 in
+            let priority1 = modelPriority(m1.id)
+            let priority2 = modelPriority(m2.id)
+            if priority1 != priority2 {
+                return priority1 < priority2
+            }
+            return m1.id < m2.id
+        }
+    }
+
+    /// 模型优先级（数字越小越靠前）
+    private func modelPriority(_ modelId: String) -> Int {
+        if modelId.contains("gpt-4o") { return 1 }
+        if modelId.contains("gpt-4") { return 2 }
+        if modelId.contains("gpt-3.5") { return 3 }
+        if modelId.contains("claude") { return 4 }
+        return 100
+    }
+
     // MARK: - Private
 
     private func sendChatRequest(messages: [[String: Any]]) async throws -> String {

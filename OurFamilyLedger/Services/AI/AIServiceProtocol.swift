@@ -28,6 +28,19 @@ enum AIServiceError: LocalizedError {
     }
 }
 
+/// AI 模型信息
+struct AIModel: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let ownedBy: String?
+
+    init(id: String, name: String? = nil, ownedBy: String? = nil) {
+        self.id = id
+        self.name = name ?? id
+        self.ownedBy = ownedBy
+    }
+}
+
 /// AI 服务协议
 protocol AIServiceProtocol {
     /// 从文本解析交易
@@ -38,6 +51,9 @@ protocol AIServiceProtocol {
 
     /// 测试 API 连接
     func testConnection() async throws -> Bool
+
+    /// 获取可用模型列表
+    func fetchModels() async throws -> [AIModel]
 }
 
 /// AI 提供商

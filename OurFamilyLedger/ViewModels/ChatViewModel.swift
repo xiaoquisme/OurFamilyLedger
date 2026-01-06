@@ -24,10 +24,11 @@ final class ChatViewModel: ObservableObject {
     private func setupAIService() {
         // 从 UserDefaults 和 Keychain 加载配置
         let provider = AIProvider(rawValue: UserDefaults.standard.string(forKey: "aiProvider") ?? "openai") ?? .openai
+        let model = UserDefaults.standard.string(forKey: "aiModel")
 
         if let apiKey = try? KeychainService.shared.getAPIKey(for: provider), !apiKey.isEmpty {
             let endpoint = try? KeychainService.shared.getCustomEndpoint()
-            aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint)
+            aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint, model: model)
         }
     }
 

@@ -3,12 +3,16 @@ import SwiftData
 
 struct SettingsView: View {
     @AppStorage("aiProvider") private var aiProvider = "openai"
+    @AppStorage("aiModel") private var aiModel = "gpt-4o-mini"
     @AppStorage("ocrMode") private var ocrMode = "local"
     @AppStorage("defaultCurrency") private var defaultCurrency = "CNY"
 
     @State private var showingAPIKeySettings = false
     @State private var showingTestParse = false
     @State private var showingExportSheet = false
+    @State private var fetchedModels: [AIModel] = []
+    @State private var isFetchingModels = false
+    @State private var modelFetchError: String?
 
     var body: some View {
         NavigationStack {
@@ -19,6 +23,76 @@ struct SettingsView: View {
                         Text("OpenAI").tag("openai")
                         Text("Claude").tag("claude")
                         Text("自定义").tag("custom")
+                    }
+                    .onChange(of: aiProvider) { _, newValue in
+                        // 切换提供商时设置默认模型
+                        switch newValue {
+                        case "openai":
+                            aiModel = "gpt-4o-mini"
+                        case "claude":
+                            aiModel = "claude-3-5-sonnet-20241022"
+                        default:
+                            break
+                        }
+                    }
+
+                    // 模型选择
+                    if fetchedModels.isEmpty {
+                        // 使用默认模型列表
+                        Picker("模型", selection: $aiModel) {
+                            if aiProvider == "openai" {
+                                Text("GPT-4o Mini").tag("gpt-4o-mini")
+                                Text("GPT-4o").tag("gpt-4o")
+                                Text("GPT-4 Turbo").tag("gpt-4-turbo")
+                                Text("GPT-3.5 Turbo").tag("gpt-3.5-turbo")
+                            } else if aiProvider == "claude" {
+                                Text("Claude 3.5 Sonnet").tag("claude-3-5-sonnet-20241022")
+                                Text("Claude 3.5 Haiku").tag("claude-3-5-haiku-20241022")
+                                Text("Claude 3 Opus").tag("claude-3-opus-20240229")
+                            } else {
+                                Text("自定义模型").tag(aiModel)
+                            }
+                        }
+                    } else {
+                        // 使用从 API 获取的模型列表
+                        Picker("模型", selection: $aiModel) {
+                            ForEach(fetchedModels) { model in
+                                Text(model.name).tag(model.id)
+                            }
+                        }
+                    }
+
+                    // 刷新模型列表按钮
+                    Button {
+                        fetchModels()
+                    } label: {
+                        HStack {
+                            Text("刷新模型列表")
+                            Spacer()
+                            if isFetchingModels {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .disabled(isFetchingModels)
+
+                    if let error = modelFetchError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+
+                    if aiProvider == "custom" {
+                        HStack {
+                            Text("模型名称")
+                            Spacer()
+                            TextField("model-name", text: $aiModel)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     Button {
@@ -139,6 +213,53 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showingExportSheet) {
                 ExportDataView()
+            }
+            .onChange(of: aiProvider) { _, _ in
+                // 切换提供商时清空已获取的模型列表
+                fetchedModels = []
+                modelFetchError = nil
+            }
+        }
+    }
+
+    // MARK: - Fetch Models
+
+    private func fetchModels() {
+        isFetchingModels = true
+        modelFetchError = nil
+
+        Task {
+            do {
+                let providerEnum = AIProvider(rawValue: aiProvider) ?? .openai
+
+                guard let apiKey = try? KeychainService.shared.getAPIKey(for: providerEnum),
+                      !apiKey.isEmpty else {
+                    await MainActor.run {
+                        modelFetchError = "请先配置 API Key"
+                        isFetchingModels = false
+                    }
+                    return
+                }
+
+                let endpoint = try? KeychainService.shared.getCustomEndpoint()
+                let aiService = AIServiceFactory.create(provider: providerEnum, apiKey: apiKey, endpoint: endpoint)
+
+                let models = try await aiService.fetchModels()
+
+                await MainActor.run {
+                    fetchedModels = models
+                    isFetchingModels = false
+
+                    // 如果当前选择的模型不在列表中，选择第一个
+                    if !models.isEmpty && !models.contains(where: { $0.id == aiModel }) {
+                        aiModel = models.first?.id ?? aiModel
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    modelFetchError = error.localizedDescription
+                    isFetchingModels = false
+                }
             }
         }
     }
@@ -375,7 +496,8 @@ struct TestParseView: View {
                 }
 
                 let endpoint = try? KeychainService.shared.getCustomEndpoint()
-                let aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint)
+                let model = UserDefaults.standard.string(forKey: "aiModel")
+                let aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint, model: model)
 
                 let drafts = try await aiService.parseTransaction(from: inputText)
 
@@ -407,17 +529,31 @@ struct CategorySettingsView: View {
 
     init() {}
 
+    private var expenseCategories: [Category] {
+        categories.filter { $0.type == .expense }
+    }
+
+    private var incomeCategories: [Category] {
+        categories.filter { $0.type == .income }
+    }
+
     var body: some View {
         List {
             Section("支出分类") {
-                ForEach(categories.filter { $0.type == .expense }) { category in
+                ForEach(expenseCategories) { category in
                     CategoryRow(category: category)
+                }
+                .onDelete { indexSet in
+                    deleteCategories(from: expenseCategories, at: indexSet)
                 }
             }
 
             Section("收入分类") {
-                ForEach(categories.filter { $0.type == .income }) { category in
+                ForEach(incomeCategories) { category in
                     CategoryRow(category: category)
+                }
+                .onDelete { indexSet in
+                    deleteCategories(from: incomeCategories, at: indexSet)
                 }
             }
 
@@ -430,8 +566,20 @@ struct CategorySettingsView: View {
             }
         }
         .navigationTitle("分类管理")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                EditButton()
+            }
+        }
         .sheet(isPresented: $showingAddCategory) {
             AddCategoryView()
+        }
+    }
+
+    private func deleteCategories(from list: [Category], at offsets: IndexSet) {
+        for index in offsets {
+            let category = list[index]
+            modelContext.delete(category)
         }
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */; };
 		09F52E5FFAC78D6299A200CC /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEA8DFFF81AB02CC23A80B3 /* Category.swift */; };
 		0F437A2CE324B3E0CD2F8E2A /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A3B065E6F41F42FB3667C0 /* Member.swift */; };
 		120A336CD0F03FA3EB70C11E /* ConflictResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62435557595A07F0B1D9C97A /* ConflictResolver.swift */; };
@@ -59,6 +60,7 @@
 		E9BFB317030DB6C3054D4922 /* OurFamilyLedgerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OurFamilyLedgerApp.swift; sourceTree = "<group>"; };
 		FA8EA8555B85CFD2DAAFC15A /* CSVService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVService.swift; sourceTree = "<group>"; };
 		FB3BAD3832D7A9AC397D8913 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -196,6 +198,7 @@
 		ACA7F8E7CFE642670E971D9F /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -240,12 +243,24 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXResourcesBuildPhase section */
+		B3C2D1E0F9A8B7C6D5E4F3A2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		442E7B6ECA8CBD41E779BA47 /* OurFamilyLedger */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 02ECCB775AAD1F3C7BEBB31D /* Build configuration list for PBXNativeTarget "OurFamilyLedger" */;
 			buildPhases = (
 				CD988425094B01CC4EDA8B0F /* Sources */,
+				B3C2D1E0F9A8B7C6D5E4F3A2 /* Resources */,
 			);
 			buildRules = (
 			);
