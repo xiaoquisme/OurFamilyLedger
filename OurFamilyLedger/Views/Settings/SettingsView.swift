@@ -212,11 +212,40 @@ struct APIKeySettingsView: View {
     }
 
     private func loadKeys() {
-        // TODO: 从 Keychain 加载
+        // 从 Keychain 加载
+        openaiKey = (try? KeychainService.shared.getAPIKey(for: .openai)) ?? ""
+        claudeKey = (try? KeychainService.shared.getAPIKey(for: .claude)) ?? ""
+        customKey = (try? KeychainService.shared.getAPIKey(for: .custom)) ?? ""
+        customEndpoint = (try? KeychainService.shared.getCustomEndpoint()) ?? ""
     }
 
     private func saveKeys() {
-        // TODO: 保存到 Keychain
+        // 保存到 Keychain
+        do {
+            if !openaiKey.isEmpty {
+                try KeychainService.shared.saveAPIKey(openaiKey, for: .openai)
+            } else {
+                try? KeychainService.shared.deleteAPIKey(for: .openai)
+            }
+
+            if !claudeKey.isEmpty {
+                try KeychainService.shared.saveAPIKey(claudeKey, for: .claude)
+            } else {
+                try? KeychainService.shared.deleteAPIKey(for: .claude)
+            }
+
+            if !customKey.isEmpty {
+                try KeychainService.shared.saveAPIKey(customKey, for: .custom)
+            } else {
+                try? KeychainService.shared.deleteAPIKey(for: .custom)
+            }
+
+            if !customEndpoint.isEmpty {
+                try KeychainService.shared.saveCustomEndpoint(customEndpoint)
+            }
+        } catch {
+            print("保存 API Key 失败: \(error)")
+        }
     }
 }
 
@@ -288,7 +317,7 @@ struct TestParseView: View {
 
                     if let result = result {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("金额: ¥\(result.amount)")
+                            Text("金额: ¥\(NSDecimalNumber(decimal: result.amount).doubleValue)")
                             Text("分类: \(result.categoryName)")
                             Text("付款人: \(result.payerName)")
                             Text("参与人: \(result.participantNames.joined(separator: "、"))")
@@ -330,21 +359,39 @@ struct TestParseView: View {
         errorMessage = nil
         result = nil
 
-        // TODO: 调用 AI 服务进行解析
         Task {
-            try? await Task.sleep(for: .seconds(1))
+            do {
+                // 获取当前 AI 配置
+                let providerString = UserDefaults.standard.string(forKey: "aiProvider") ?? "openai"
+                let provider = AIProvider(rawValue: providerString) ?? .openai
 
-            await MainActor.run {
-                // 模拟解析结果
-                result = TransactionDraft(
-                    amount: 128.00,
-                    categoryName: "餐饮",
-                    payerName: "我",
-                    participantNames: ["我", "家人"],
-                    note: inputText,
-                    source: .text
-                )
-                isProcessing = false
+                guard let apiKey = try? KeychainService.shared.getAPIKey(for: provider),
+                      !apiKey.isEmpty else {
+                    await MainActor.run {
+                        errorMessage = "请先在设置中配置 API Key"
+                        isProcessing = false
+                    }
+                    return
+                }
+
+                let endpoint = try? KeychainService.shared.getCustomEndpoint()
+                let aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint)
+
+                let drafts = try await aiService.parseTransaction(from: inputText)
+
+                await MainActor.run {
+                    if let firstDraft = drafts.first {
+                        result = firstDraft
+                    } else {
+                        errorMessage = "未能识别交易信息"
+                    }
+                    isProcessing = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isProcessing = false
+                }
             }
         }
     }

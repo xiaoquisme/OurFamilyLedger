@@ -1,13 +1,15 @@
 import SwiftUI
+import SwiftData
 import PhotosUI
 
 struct ChatView: View {
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel = ChatViewModel()
+
     @State private var messageText = ""
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var selectedImages: [UIImage] = []
-    @State private var isProcessing = false
-    @State private var pendingDrafts: [TransactionDraft] = []
-    @State private var messages: [ChatMessage] = []
+    @State private var editingDraft: TransactionDraft?
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
@@ -17,21 +19,21 @@ struct ChatView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            ForEach(messages) { message in
+                            ForEach(viewModel.messages) { message in
                                 ChatMessageView(message: message)
                             }
 
                             // 待确认的交易卡片
-                            ForEach(pendingDrafts) { draft in
+                            ForEach(viewModel.pendingDrafts) { draft in
                                 TransactionDraftCard(
                                     draft: draft,
                                     onConfirm: { confirmDraft(draft) },
-                                    onEdit: { editDraft(draft) },
-                                    onDelete: { deleteDraft(draft) }
+                                    onEdit: { editingDraft = draft },
+                                    onDelete: { viewModel.deleteDraft(draft) }
                                 )
                             }
 
-                            if isProcessing {
+                            if viewModel.isProcessing {
                                 ProcessingIndicator()
                             }
                         }
@@ -50,7 +52,7 @@ struct ChatView: View {
                     text: $messageText,
                     selectedPhotos: $selectedPhotos,
                     selectedImages: $selectedImages,
-                    isProcessing: isProcessing,
+                    isProcessing: viewModel.isProcessing,
                     isInputFocused: $isInputFocused,
                     onSend: sendMessage
                 )
@@ -59,11 +61,21 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if !pendingDrafts.isEmpty {
+                    if !viewModel.pendingDrafts.isEmpty {
                         Button("全部确认") {
-                            confirmAllDrafts()
+                            Task {
+                                await viewModel.confirmAllDrafts()
+                            }
                         }
                     }
+                }
+            }
+            .onAppear {
+                viewModel.configure(modelContext: modelContext)
+            }
+            .sheet(item: $editingDraft) { draft in
+                EditDraftView(draft: draft) { updatedDraft in
+                    viewModel.updateDraft(draft, with: updatedDraft)
                 }
             }
         }
@@ -74,84 +86,127 @@ struct ChatView: View {
     private func sendMessage() {
         guard !messageText.isEmpty || !selectedImages.isEmpty else { return }
 
-        let userMessage = ChatMessage(
-            type: .user,
-            text: messageText,
-            images: selectedImages
-        )
-        messages.append(userMessage)
-
         let inputText = messageText
         let inputImages = selectedImages
 
         messageText = ""
         selectedPhotos = []
         selectedImages = []
-        isProcessing = true
 
-        // TODO: 调用 AI 服务解析
         Task {
-            await processInput(text: inputText, images: inputImages)
-        }
-    }
-
-    private func processInput(text: String, images: [UIImage]) async {
-        // 模拟处理延迟
-        try? await Task.sleep(for: .seconds(1))
-
-        // TODO: 实际调用 OCR 和 AI 服务
-        // 临时模拟：创建一个示例草稿
-        if !text.isEmpty {
-            let mockDraft = TransactionDraft(
-                amount: 128.00,
-                categoryName: "餐饮",
-                payerName: "我",
-                participantNames: ["我", "家人"],
-                note: text,
-                merchant: "",
-                source: .text
-            )
-
-            await MainActor.run {
-                pendingDrafts.append(mockDraft)
-                isProcessing = false
-
-                let assistantMessage = ChatMessage(
-                    type: .assistant,
-                    text: "已识别到一笔交易，请确认信息"
-                )
-                messages.append(assistantMessage)
-            }
-        } else {
-            await MainActor.run {
-                isProcessing = false
-            }
+            await viewModel.processInput(text: inputText, images: inputImages)
         }
     }
 
     private func confirmDraft(_ draft: TransactionDraft) {
-        // TODO: 保存到数据库
-        pendingDrafts.removeAll { $0.id == draft.id }
+        Task {
+            await viewModel.confirmDraft(draft)
+        }
+    }
+}
 
-        let message = ChatMessage(
-            type: .system,
-            text: "已入账: \(draft.categoryName) ¥\(draft.amount)"
-        )
-        messages.append(message)
+// MARK: - Edit Draft View
+
+struct EditDraftView: View {
+    @Environment(\.dismiss) private var dismiss
+    let draft: TransactionDraft
+    let onSave: (TransactionDraft) -> Void
+
+    @State private var amount: String
+    @State private var categoryName: String
+    @State private var payerName: String
+    @State private var participantsText: String
+    @State private var note: String
+    @State private var merchant: String
+    @State private var transactionType: TransactionType
+    @State private var date: Date
+
+    init(draft: TransactionDraft, onSave: @escaping (TransactionDraft) -> Void) {
+        self.draft = draft
+        self.onSave = onSave
+        _amount = State(initialValue: "\(draft.amount)")
+        _categoryName = State(initialValue: draft.categoryName)
+        _payerName = State(initialValue: draft.payerName)
+        _participantsText = State(initialValue: draft.participantNames.joined(separator: "、"))
+        _note = State(initialValue: draft.note)
+        _merchant = State(initialValue: draft.merchant)
+        _transactionType = State(initialValue: draft.type)
+        _date = State(initialValue: draft.date)
     }
 
-    private func confirmAllDrafts() {
-        for draft in pendingDrafts {
-            confirmDraft(draft)
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("基本信息") {
+                    HStack {
+                        Text("金额")
+                        Spacer()
+                        TextField("0.00", text: $amount)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+
+                    Picker("类型", selection: $transactionType) {
+                        Text("支出").tag(TransactionType.expense)
+                        Text("收入").tag(TransactionType.income)
+                    }
+
+                    DatePicker("日期", selection: $date, displayedComponents: .date)
+                }
+
+                Section("分类") {
+                    TextField("分类名称", text: $categoryName)
+                }
+
+                Section("人员") {
+                    TextField("付款人", text: $payerName)
+                    TextField("参与人（用顿号分隔）", text: $participantsText)
+                }
+
+                Section("其他") {
+                    TextField("商户", text: $merchant)
+                    TextField("备注", text: $note)
+                }
+            }
+            .navigationTitle("编辑交易")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") {
+                        saveDraft()
+                    }
+                }
+            }
         }
     }
 
-    private func editDraft(_ draft: TransactionDraft) {
-        // TODO: 打开编辑页面
-    }
+    private func saveDraft() {
+        let participants = participantsText
+            .components(separatedBy: CharacterSet(charactersIn: "、,，"))
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
 
-    private func deleteDraft(_ draft: TransactionDraft) {
-        pendingDrafts.removeAll { $0.id == draft.id }
+        let updatedDraft = TransactionDraft(
+            id: draft.id,
+            date: date,
+            amount: Decimal(string: amount) ?? draft.amount,
+            type: transactionType,
+            categoryName: categoryName,
+            payerName: payerName,
+            participantNames: participants,
+            note: note,
+            merchant: merchant,
+            source: draft.source,
+            ocrText: draft.ocrText,
+            confidenceAmount: 1.0,
+            confidenceDate: 1.0
+        )
+
+        onSave(updatedDraft)
+        dismiss()
     }
 }
 
@@ -260,7 +315,7 @@ struct TransactionDraftCard: View {
 
             // 交易信息
             VStack(spacing: 8) {
-                InfoRow(label: "金额", value: "¥\(draft.amount)")
+                InfoRow(label: "金额", value: "¥\(NSDecimalNumber(decimal: draft.amount).doubleValue)")
                 InfoRow(label: "分类", value: draft.categoryName)
                 InfoRow(label: "付款人", value: draft.payerName)
                 InfoRow(label: "参与人", value: draft.participantNames.joined(separator: "、"))
