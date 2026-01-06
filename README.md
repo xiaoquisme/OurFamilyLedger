@@ -87,7 +87,7 @@ OurFamilyLedger/
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/yourusername/OurFamilyLedger.git
+git clone https://github.com/xiaoquisme/OurFamilyLedger.git
 cd OurFamilyLedger
 ```
 
@@ -152,8 +152,8 @@ id, created_at, updated_at, date, amount, category, payer, participants, note, m
 
 ## 许可证
 
-MIT License
+MIT License - [https://github.com/xiaoquisme/OurFamilyLedger](https://github.com/xiaoquisme/OurFamilyLedger)
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 [Issue](https://github.com/xiaoquisme/OurFamilyLedger/issues) 和 [Pull Request](https://github.com/xiaoquisme/OurFamilyLedger/pulls)！
