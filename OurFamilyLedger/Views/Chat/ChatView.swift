@@ -8,6 +8,7 @@ struct ChatView: View {
     @State private var isProcessing = false
     @State private var pendingDrafts: [TransactionDraft] = []
     @State private var messages: [ChatMessage] = []
+    @FocusState private var isInputFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -36,6 +37,10 @@ struct ChatView: View {
                         }
                         .padding()
                     }
+                    .scrollDismissesKeyboard(.interactively)
+                    .onTapGesture {
+                        isInputFocused = false
+                    }
                 }
 
                 Divider()
@@ -46,6 +51,7 @@ struct ChatView: View {
                     selectedPhotos: $selectedPhotos,
                     selectedImages: $selectedImages,
                     isProcessing: isProcessing,
+                    isInputFocused: $isInputFocused,
                     onSend: sendMessage
                 )
             }
@@ -328,6 +334,7 @@ struct ChatInputView: View {
     @Binding var selectedPhotos: [PhotosPickerItem]
     @Binding var selectedImages: [UIImage]
     let isProcessing: Bool
+    var isInputFocused: FocusState<Bool>.Binding
     let onSend: () -> Void
 
     var body: some View {
@@ -383,6 +390,13 @@ struct ChatInputView: View {
                     .padding(.vertical, 8)
                     .background(Color(.systemGray6))
                     .clipShape(Capsule())
+                    .focused(isInputFocused)
+                    .submitLabel(.send)
+                    .onSubmit {
+                        if canSend && !isProcessing {
+                            onSend()
+                        }
+                    }
 
                 // 发送按钮
                 Button(action: onSend) {
