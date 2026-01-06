@@ -194,7 +194,7 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Link(destination: URL(string: "https://github.com")!) {
+                    Link(destination: URL(string: "https://github.com/xiaoquisme/OurFamilyLedger")!) {
                         HStack {
                             Text("开源许可")
                             Spacer()
