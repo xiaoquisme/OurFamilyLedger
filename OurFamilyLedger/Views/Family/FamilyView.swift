@@ -9,6 +9,8 @@ struct FamilyView: View {
     @State private var showingShareSheet = false
     @State private var selectedMember: Member?
 
+    init() {}
+
     var body: some View {
         NavigationStack {
             List {

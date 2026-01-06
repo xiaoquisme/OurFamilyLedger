@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
     @AppStorage("aiProvider") private var aiProvider = "openai"
@@ -174,7 +175,7 @@ struct APIKeySettingsView: View {
                     )
                 }
 
-                Section("自定义 API") {
+                Section {
                     TextField("API 端点", text: $customEndpoint)
                         .textContentType(.URL)
                         .autocapitalization(.none)
@@ -184,6 +185,8 @@ struct APIKeySettingsView: View {
                         placeholder: "API Key",
                         showingText: showingKey
                     )
+                } header: {
+                    Text("自定义 API")
                 } footer: {
                     Text("支持 OpenAI 兼容的 API 端点")
                 }
@@ -354,6 +357,8 @@ struct CategorySettingsView: View {
     @Query(sort: \Category.sortOrder) private var categories: [Category]
 
     @State private var showingAddCategory = false
+
+    init() {}
 
     var body: some View {
         List {

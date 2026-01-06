@@ -10,6 +10,8 @@ struct TransactionListView: View {
     @State private var showingFilters = false
     @State private var dateRange: ClosedRange<Date>?
 
+    init() {}
+
     var body: some View {
         NavigationStack {
             Group {

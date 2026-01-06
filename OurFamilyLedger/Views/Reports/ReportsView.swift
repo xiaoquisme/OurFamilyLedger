@@ -15,6 +15,8 @@ struct ReportsView: View {
         case member = "成员"
     }
 
+    init() {}
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {

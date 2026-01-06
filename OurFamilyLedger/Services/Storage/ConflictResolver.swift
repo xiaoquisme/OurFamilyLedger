@@ -241,7 +241,7 @@ final class SyncManager: ObservableObject {
     @Published var pendingConflicts: [ConflictRecord] = []
 
     private let csvService = CSVService()
-    private let iCloudService = iCloudService()
+    private let cloudService = iCloudService()
     private let conflictResolver = ConflictResolver()
 
     private var metadataQuery: NSMetadataQuery?
@@ -265,7 +265,7 @@ final class SyncManager: ObservableObject {
                 }
 
                 // 读取当前版本和冲突版本
-                let currentData = try await iCloudService.readFile(at: conflictFile)
+                let currentData = try await cloudService.readFile(at: conflictFile)
                 guard let currentContent = String(data: currentData, encoding: .utf8) else {
                     continue
                 }

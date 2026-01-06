@@ -24,7 +24,7 @@ targets:
       - path: OurFamilyLedger/Resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ourfamilyledger.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.xiaoquisme.ourfamilyledger
         INFOPLIST_FILE: OurFamilyLedger/Info.plist
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
@@ -38,15 +38,6 @@ targets:
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "需要访问相册以选择截图进行记账识别"
         INFOPLIST_KEY_NSCameraUsageDescription: "需要使用相机拍摄小票进行记账识别"
         SWIFT_EMIT_LOC_STRINGS: YES
-    entitlements:
-      path: OurFamilyLedger/OurFamilyLedger.entitlements
-      properties:
-        com.apple.developer.icloud-container-identifiers:
-          - $(TeamIdentifierPrefix)com.ourfamilyledger.app
-        com.apple.developer.icloud-services:
-          - CloudDocuments
-        com.apple.developer.ubiquity-container-identifiers:
-          - $(TeamIdentifierPrefix)com.ourfamilyledger.app
     dependencies: []
 
 schemes:
