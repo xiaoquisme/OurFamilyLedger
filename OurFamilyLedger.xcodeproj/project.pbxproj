@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */; };
 		09F52E5FFAC78D6299A200CC /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEA8DFFF81AB02CC23A80B3 /* Category.swift */; };
 		0F437A2CE324B3E0CD2F8E2A /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A3B065E6F41F42FB3667C0 /* Member.swift */; };
 		120A336CD0F03FA3EB70C11E /* ConflictResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62435557595A07F0B1D9C97A /* ConflictResolver.swift */; };
@@ -22,6 +21,7 @@
 		93FBEC4F54B2E8967105B878 /* ReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CC2A3552F3BD5E74B2A7F4 /* ReportsView.swift */; };
 		94B7D2DDB046AF8376AD66EE /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401D1A46C5766F034A1CB33E /* Transaction.swift */; };
 		9A6D878F6CD6F38C66504555 /* CSVService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8EA8555B85CFD2DAAFC15A /* CSVService.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */; };
 		A67FB67A392B10B47F4087C0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5671FE09D455999353EF21FB /* SettingsView.swift */; };
 		C1DBE28BDD119646E98B5720 /* TransactionListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9824F78774BD96B8A27C698B /* TransactionListViewModel.swift */; };
 		C42DA32222202D4D3DF3145C /* AppleOCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680C6891D961F448599ADE8E /* AppleOCRService.swift */; };
@@ -58,9 +58,9 @@
 		D5054C55889D73A679188E55 /* Ledger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ledger.swift; sourceTree = "<group>"; };
 		E2E2911522129CDC64F356D3 /* OCRServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRServiceProtocol.swift; sourceTree = "<group>"; };
 		E9BFB317030DB6C3054D4922 /* OurFamilyLedgerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OurFamilyLedgerApp.swift; sourceTree = "<group>"; };
+		F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FA8EA8555B85CFD2DAAFC15A /* CSVService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVService.swift; sourceTree = "<group>"; };
 		FB3BAD3832D7A9AC397D8913 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
-		F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -243,17 +243,6 @@
 		};
 /* End PBXGroup section */
 
-/* Begin PBXResourcesBuildPhase section */
-		B3C2D1E0F9A8B7C6D5E4F3A2 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXNativeTarget section */
 		442E7B6ECA8CBD41E779BA47 /* OurFamilyLedger */ = {
 			isa = PBXNativeTarget;
@@ -304,6 +293,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B3C2D1E0F9A8B7C6D5E4F3A2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		CD988425094B01CC4EDA8B0F /* Sources */ = {
@@ -407,23 +407,23 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OurFamilyLedger/OurFamilyLedger.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = VQ8EM22GC7;
+				DEVELOPMENT_TEAM = 9Z52FQXV2R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OurFamilyLedger/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "一家账本";
 				INFOPLIST_KEY_NSCameraUsageDescription = "需要使用相机拍摄小票进行记账识别";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要访问相册以选择截图进行记账识别";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.xiaoquisme.ourfamilyledger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xiaoquisme.ourfamilyledgers;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -491,23 +491,23 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OurFamilyLedger/OurFamilyLedger.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = VQ8EM22GC7;
+				DEVELOPMENT_TEAM = 9Z52FQXV2R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OurFamilyLedger/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "一家账本";
 				INFOPLIST_KEY_NSCameraUsageDescription = "需要使用相机拍摄小票进行记账识别";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要访问相册以选择截图进行记账识别";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.xiaoquisme.ourfamilyledger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xiaoquisme.ourfamilyledgers;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
