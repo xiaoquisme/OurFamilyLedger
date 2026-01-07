@@ -854,35 +854,321 @@ struct ShareSheet: UIViewControllerRepresentable {
 // MARK: - Import Data View
 
 struct ImportDataView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var showingFilePicker = false
+    @State private var isProcessing = false
+    @State private var errorMessage: String?
+    @State private var parsedDrafts: [TransactionDraft] = []
+    @State private var fileName: String?
+    @State private var importSuccess = false
 
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "doc.badge.arrow.up")
-                .font(.system(size: 60))
-                .foregroundStyle(.blue)
+        ScrollView {
+            VStack(spacing: 24) {
+                // 图标和标题
+                Image(systemName: "doc.badge.arrow.up")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.blue)
 
-            Text("导入 CSV 数据")
-                .font(.title2)
-                .fontWeight(.bold)
+                Text("智能导入数据")
+                    .font(.title2)
+                    .fontWeight(.bold)
 
-            Text("选择符合格式要求的 CSV 文件进行导入")
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                Text("选择文件后，AI 将自动识别并解析交易记录")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
 
-            Button {
-                showingFilePicker = true
-            } label: {
-                Label("选择文件", systemImage: "folder")
+                // 选择文件按钮
+                Button {
+                    showingFilePicker = true
+                } label: {
+                    HStack {
+                        Image(systemName: "folder")
+                        Text(fileName ?? "选择文件")
+                    }
                     .frame(maxWidth: .infinity)
+                    .padding()
+                }
+                .buttonStyle(.bordered)
+                .padding(.horizontal)
+
+                // 支持的格式
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("支持的文件格式:")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Text("• CSV 文件 (.csv)")
+                    Text("• 文本文件 (.txt)")
+                    Text("• Excel 导出的账单")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal)
+
+                // 处理中状态
+                if isProcessing {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("AI 正在解析文件...")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                }
+
+                // 错误信息
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal)
+                }
+
+                // 解析结果
+                if !parsedDrafts.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("识别到 \(parsedDrafts.count) 笔交易")
+                                .font(.headline)
+                            Spacer()
+                            Button("全部导入") {
+                                importAllDrafts()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding(.horizontal)
+
+                        ForEach(parsedDrafts) { draft in
+                            ImportDraftRow(draft: draft) {
+                                importDraft(draft)
+                            } onDelete: {
+                                parsedDrafts.removeAll { $0.id == draft.id }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+
+                // 导入成功提示
+                if importSuccess {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("导入成功！")
+                    }
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                Spacer(minLength: 40)
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
+            .padding(.top, 24)
+        }
+        .navigationTitle("导入数据")
+        .fileImporter(
+            isPresented: $showingFilePicker,
+            allowedContentTypes: [.commaSeparatedText, .plainText, .text],
+            allowsMultipleSelection: false
+        ) { result in
+            handleFileSelection(result)
+        }
+    }
+
+    private func handleFileSelection(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+
+            fileName = url.lastPathComponent
+            isProcessing = true
+            errorMessage = nil
+            parsedDrafts = []
+            importSuccess = false
+
+            Task {
+                await parseFile(at: url)
+            }
+
+        case .failure(let error):
+            errorMessage = "选择文件失败: \(error.localizedDescription)"
+        }
+    }
+
+    private func parseFile(at url: URL) async {
+        do {
+            // 获取文件访问权限
+            guard url.startAccessingSecurityScopedResource() else {
+                await MainActor.run {
+                    errorMessage = "无法访问文件"
+                    isProcessing = false
+                }
+                return
+            }
+
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            // 读取文件内容
+            let content = try String(contentsOf: url, encoding: .utf8)
+
+            guard !content.isEmpty else {
+                await MainActor.run {
+                    errorMessage = "文件内容为空"
+                    isProcessing = false
+                }
+                return
+            }
+
+            // 使用 AI 解析
+            let providerString = UserDefaults.standard.string(forKey: "aiProvider") ?? "openai"
+            let provider = AIProvider(rawValue: providerString) ?? .openai
+
+            guard let apiKey = try? KeychainService.shared.getAPIKey(for: provider),
+                  !apiKey.isEmpty else {
+                await MainActor.run {
+                    errorMessage = "请先在设置中配置 API Key"
+                    isProcessing = false
+                }
+                return
+            }
+
+            let endpoint = try? KeychainService.shared.getCustomEndpoint()
+            let model = UserDefaults.standard.string(forKey: "aiModel")
+            let aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint, model: model)
+
+            // 构建提示词
+            let prompt = """
+            请从以下文件内容中识别所有交易记录。这可能是银行账单、支付记录或其他财务数据。
+            请提取每笔交易的日期、金额、分类、备注等信息。
+
+            文件内容:
+            \(content.prefix(8000))
+            """
+
+            let drafts = try await aiService.parseTransaction(from: prompt)
+
+            await MainActor.run {
+                parsedDrafts = drafts
+                isProcessing = false
+
+                if drafts.isEmpty {
+                    errorMessage = "未能从文件中识别到交易记录"
+                }
+            }
+
+        } catch {
+            await MainActor.run {
+                errorMessage = "解析失败: \(error.localizedDescription)"
+                isProcessing = false
+            }
+        }
+    }
+
+    private func importDraft(_ draft: TransactionDraft) {
+        let transaction = TransactionRecord(
+            date: draft.date,
+            amount: draft.amount,
+            type: draft.type,
+            categoryId: nil,
+            payerId: nil,
+            participantIds: [],
+            note: draft.note,
+            merchant: draft.merchant,
+            source: .text
+        )
+
+        modelContext.insert(transaction)
+        parsedDrafts.removeAll { $0.id == draft.id }
+
+        if parsedDrafts.isEmpty {
+            importSuccess = true
+        }
+    }
+
+    private func importAllDrafts() {
+        for draft in parsedDrafts {
+            let transaction = TransactionRecord(
+                date: draft.date,
+                amount: draft.amount,
+                type: draft.type,
+                categoryId: nil,
+                payerId: nil,
+                participantIds: [],
+                note: draft.note,
+                merchant: draft.merchant,
+                source: .text
+            )
+            modelContext.insert(transaction)
+        }
+
+        parsedDrafts = []
+        importSuccess = true
+    }
+}
+
+// MARK: - Import Draft Row
+
+struct ImportDraftRow: View {
+    let draft: TransactionDraft
+    let onImport: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(draft.type == .expense ? "支出" : "收入")
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(draft.type == .expense ? Color.red.opacity(0.1) : Color.green.opacity(0.1))
+                        .foregroundStyle(draft.type == .expense ? .red : .green)
+                        .clipShape(Capsule())
+
+                    Text("¥\(NSDecimalNumber(decimal: draft.amount).doubleValue, specifier: "%.2f")")
+                        .font(.headline)
+                }
+
+                Text(draft.note.isEmpty ? draft.categoryName : draft.note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text(draft.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
 
             Spacer()
+
+            HStack(spacing: 8) {
+                Button(action: onDelete) {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+
+                Button(action: onImport) {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(.top, 40)
-        .navigationTitle("导入数据")
+        .padding()
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
     }
 }
 
