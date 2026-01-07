@@ -657,9 +657,14 @@ struct AddCategoryView: View {
 
 struct ExportDataView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     @State private var selectedMonth = Date()
     @State private var exportAll = true
+    @State private var isExporting = false
+    @State private var exportError: String?
+    @State private var showingShareSheet = false
+    @State private var exportFileURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -680,10 +685,26 @@ struct ExportDataView: View {
                     Button {
                         exportData()
                     } label: {
-                        Label("导出 CSV", systemImage: "doc.text")
-                            .frame(maxWidth: .infinity)
+                        HStack {
+                            if isExporting {
+                                ProgressView()
+                                    .padding(.trailing, 4)
+                            }
+                            Label("导出 CSV", systemImage: "doc.text")
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .disabled(isExporting)
+                } footer: {
+                    Text("导出后可通过「文件」App、AirDrop、邮件等方式分享")
+                }
+
+                if let error = exportError {
+                    Section {
+                        Text(error)
+                            .foregroundStyle(.red)
+                    }
                 }
             }
             .navigationTitle("导出数据")
@@ -693,14 +714,123 @@ struct ExportDataView: View {
                     Button("取消") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showingShareSheet) {
+                if let url = exportFileURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
         }
         .presentationDetents([.medium])
     }
 
     private func exportData() {
-        // TODO: 实现导出逻辑
-        dismiss()
+        isExporting = true
+        exportError = nil
+
+        Task {
+            do {
+                // 获取交易记录
+                var descriptor = FetchDescriptor<TransactionRecord>(
+                    sortBy: [SortDescriptor(\.date, order: .reverse)]
+                )
+
+                if !exportAll {
+                    // 筛选指定月份
+                    let calendar = Calendar.current
+                    let year = calendar.component(.year, from: selectedMonth)
+                    let month = calendar.component(.month, from: selectedMonth)
+
+                    let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1))!
+                    let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+
+                    descriptor.predicate = #Predicate<TransactionRecord> { transaction in
+                        transaction.date >= startOfMonth && transaction.date <= endOfMonth
+                    }
+                }
+
+                let transactions = try modelContext.fetch(descriptor)
+
+                if transactions.isEmpty {
+                    await MainActor.run {
+                        exportError = "没有可导出的数据"
+                        isExporting = false
+                    }
+                    return
+                }
+
+                // 生成 CSV 内容
+                let csvContent = generateCSV(from: transactions)
+
+                // 创建临时文件
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
+                let fileName = "OurFamilyLedger_\(dateFormatter.string(from: Date())).csv"
+
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+                try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
+
+                await MainActor.run {
+                    exportFileURL = tempURL
+                    showingShareSheet = true
+                    isExporting = false
+                }
+            } catch {
+                await MainActor.run {
+                    exportError = "导出失败: \(error.localizedDescription)"
+                    isExporting = false
+                }
+            }
+        }
     }
+
+    private func generateCSV(from transactions: [TransactionRecord]) -> String {
+        var csv = "id,date,amount,type,category_id,payer_id,participants,note,merchant,source,created_at,updated_at\n"
+
+        let dateFormatter = ISO8601DateFormatter()
+
+        for transaction in transactions {
+            let participantsStr = transaction.participantIds.map { $0.uuidString }.joined(separator: ";")
+            let typeStr = transaction.type == .expense ? "expense" : "income"
+
+            let row = [
+                transaction.id.uuidString,
+                dateFormatter.string(from: transaction.date),
+                "\(transaction.amount)",
+                typeStr,
+                transaction.categoryId?.uuidString ?? "",
+                transaction.payerId?.uuidString ?? "",
+                participantsStr,
+                escapeCSV(transaction.note),
+                escapeCSV(transaction.merchant),
+                transaction.source.rawValue,
+                dateFormatter.string(from: transaction.createdAt),
+                dateFormatter.string(from: transaction.updatedAt)
+            ].joined(separator: ",")
+
+            csv += row + "\n"
+        }
+
+        return csv
+    }
+
+    private func escapeCSV(_ value: String) -> String {
+        if value.contains(",") || value.contains("\"") || value.contains("\n") {
+            return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return value
+    }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Import Data View

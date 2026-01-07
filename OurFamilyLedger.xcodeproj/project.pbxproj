@@ -414,6 +414,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OurFamilyLedger/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "一家账本";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCameraUsageDescription = "需要使用相机拍摄小票进行记账识别";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要访问相册以选择截图进行记账识别";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -498,6 +499,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OurFamilyLedger/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "一家账本";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCameraUsageDescription = "需要使用相机拍摄小票进行记账识别";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要访问相册以选择截图进行记账识别";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
