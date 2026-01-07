@@ -668,9 +668,13 @@ struct ExportDataView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
+            VStack(spacing: 20) {
+                // 导出选项
+                VStack(spacing: 16) {
                     Toggle("导出所有数据", isOn: $exportAll)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     if !exportAll {
                         DatePicker(
@@ -678,35 +682,49 @@ struct ExportDataView: View {
                             selection: $selectedMonth,
                             displayedComponents: .date
                         )
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
 
-                Section {
-                    Button {
-                        exportData()
-                    } label: {
-                        HStack {
-                            if isExporting {
-                                ProgressView()
-                                    .padding(.trailing, 4)
-                            }
-                            Label("导出 CSV", systemImage: "doc.text")
+                // 导出按钮
+                Button {
+                    exportData()
+                } label: {
+                    HStack {
+                        if isExporting {
+                            ProgressView()
+                                .tint(.white)
+                                .padding(.trailing, 4)
                         }
-                        .frame(maxWidth: .infinity)
+                        Image(systemName: "square.and.arrow.up")
+                        Text("导出 CSV")
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isExporting)
-                } footer: {
-                    Text("导出后可通过「文件」App、AirDrop、邮件等方式分享")
+                    .frame(maxWidth: .infinity)
+                    .padding()
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(isExporting)
+
+                // 提示文字
+                Text("导出后可通过「文件」App、AirDrop、邮件等方式分享")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
 
                 if let error = exportError {
-                    Section {
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+
+                Spacer()
             }
+            .padding()
             .navigationTitle("导出数据")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -720,7 +738,7 @@ struct ExportDataView: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 
     private func exportData() {
