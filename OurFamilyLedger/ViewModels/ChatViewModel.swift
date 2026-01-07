@@ -9,10 +9,17 @@ final class ChatViewModel: ObservableObject {
     @Published var pendingDrafts: [TransactionDraft] = []
     @Published var isProcessing = false
     @Published var errorMessage: String?
+    @Published var canRetry = false
 
     private var modelContext: ModelContext?
     private var aiService: AIServiceProtocol?
     private let ocrService = AppleOCRService()
+
+    // 重试相关
+    private var lastInputText: String = ""
+    private var lastInputImages: [UIImage] = []
+    private var retryCount = 0
+    private let maxRetryCount = 3
 
     // MARK: - Configuration
 
@@ -38,6 +45,12 @@ final class ChatViewModel: ObservableObject {
     func processInput(text: String, images: [UIImage]) async {
         guard !text.isEmpty || !images.isEmpty else { return }
 
+        // 保存输入用于重试
+        lastInputText = text
+        lastInputImages = images
+        retryCount = 0
+        canRetry = false
+
         // 添加用户消息
         let userMessage = ChatMessage(
             type: .user,
@@ -46,6 +59,28 @@ final class ChatViewModel: ObservableObject {
         )
         messages.append(userMessage)
 
+        await executeProcessing(text: text, images: images)
+    }
+
+    /// 重试上次失败的请求
+    func retry() async {
+        guard canRetry, retryCount < maxRetryCount else { return }
+
+        retryCount += 1
+        canRetry = false
+
+        // 添加重试消息
+        let retryMessage = ChatMessage(
+            type: .system,
+            text: "正在重试 (\(retryCount)/\(maxRetryCount))..."
+        )
+        messages.append(retryMessage)
+
+        await executeProcessing(text: lastInputText, images: lastInputImages)
+    }
+
+    /// 执行处理逻辑
+    private func executeProcessing(text: String, images: [UIImage]) async {
         isProcessing = true
         errorMessage = nil
 
@@ -78,12 +113,21 @@ final class ChatViewModel: ObservableObject {
                 )
                 messages.append(assistantMessage)
             }
+
+            // 成功后重置重试状态
+            retryCount = 0
+            canRetry = false
         } catch {
             errorMessage = error.localizedDescription
 
+            // 判断是否可以重试
+            let canRetryError = retryCount < maxRetryCount
+            canRetry = canRetryError
+
+            let retryHint = canRetryError ? " 点击重试按钮再试一次。" : ""
             let assistantMessage = ChatMessage(
                 type: .assistant,
-                text: "处理失败：\(error.localizedDescription)"
+                text: "处理失败：\(error.localizedDescription)\(retryHint)"
             )
             messages.append(assistantMessage)
         }

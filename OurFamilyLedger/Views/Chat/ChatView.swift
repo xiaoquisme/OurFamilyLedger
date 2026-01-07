@@ -36,6 +36,15 @@ struct ChatView: View {
                             if viewModel.isProcessing {
                                 ProcessingIndicator()
                             }
+
+                            // 重试按钮
+                            if viewModel.canRetry && !viewModel.isProcessing {
+                                RetryButton {
+                                    Task {
+                                        await viewModel.retry()
+                                    }
+                                }
+                            }
                         }
                         .padding()
                     }
@@ -497,6 +506,27 @@ struct ProcessingIndicator: View {
                 .foregroundStyle(.secondary)
         }
         .padding()
+    }
+}
+
+// MARK: - Retry Button
+
+struct RetryButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.clockwise")
+                Text("重试")
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(Color.orange)
+            .foregroundStyle(.white)
+            .clipShape(Capsule())
+        }
+        .padding(.vertical, 8)
     }
 }
 
