@@ -1323,7 +1323,8 @@ struct iCloudStatusView: View {
         }
 
         // 获取容器路径
-        if let containerURL = fileManager.url(forUbiquityContainerIdentifier: nil) {
+        let containerIdentifier = "iCloud.com.xiaoquisme.ourfamilyledger"
+        if let containerURL = fileManager.url(forUbiquityContainerIdentifier: containerIdentifier) {
             containerPath = containerURL.path
             let documentsURL = containerURL.appendingPathComponent("Documents")
             documentsPath = documentsURL.path

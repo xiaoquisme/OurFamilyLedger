@@ -29,9 +29,12 @@ final class SyncService: ObservableObject {
 
     // MARK: - iCloud Path
 
+    /// iCloud 容器标识符
+    private let containerIdentifier = "iCloud.com.xiaoquisme.ourfamilyledger"
+
     /// 获取 iCloud Documents URL
     private var iCloudDocumentsURL: URL? {
-        fileManager.url(forUbiquityContainerIdentifier: nil)?
+        fileManager.url(forUbiquityContainerIdentifier: containerIdentifier)?
             .appendingPathComponent("Documents")
     }
 
