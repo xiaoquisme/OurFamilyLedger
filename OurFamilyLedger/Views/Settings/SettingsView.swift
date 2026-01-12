@@ -1176,11 +1176,16 @@ struct ImportDraftRow: View {
 
 struct iCloudStatusView: View {
     @State private var iCloudAvailable = false
-    @State private var iCloudPath: String?
+    @State private var containerPath: String?
+    @State private var documentsPath: String?
+    @State private var files: [iCloudFileInfo] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     var body: some View {
         List {
-            Section {
+            // 状态
+            Section("连接状态") {
                 HStack {
                     Text("iCloud 状态")
                     Spacer()
@@ -1192,32 +1197,230 @@ struct iCloudStatusView: View {
                             .foregroundStyle(.red)
                     }
                 }
+            }
 
-                if let path = iCloudPath {
-                    HStack {
-                        Text("账本位置")
-                        Spacer()
-                        Text(path)
+            // 路径信息
+            if iCloudAvailable {
+                Section("容器路径") {
+                    if let path = containerPath {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("iCloud 容器")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(path)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
+                    if let path = documentsPath {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Documents 目录")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(path)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                // 文件列表
+                Section {
+                    if isLoading {
+                        HStack {
+                            ProgressView()
+                            Text("加载中...")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if files.isEmpty {
+                        Text("暂无文件")
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                    } else {
+                        ForEach(files) { file in
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Image(systemName: file.isDirectory ? "folder.fill" : "doc.fill")
+                                        .foregroundStyle(file.isDirectory ? .blue : .gray)
+                                    Text(file.name)
+                                        .fontWeight(.medium)
+                                }
+
+                                Text(file.relativePath)
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+
+                                if !file.isDirectory {
+                                    Text(file.sizeString)
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("文件列表")
+                        Spacer()
+                        Text("\(files.count) 项")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
 
-            Section {
-                Button("刷新状态") {
-                    checkiCloudStatus()
+            // 错误信息
+            if let error = errorMessage {
+                Section {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.caption)
                 }
+            }
+
+            // 刷新按钮
+            Section {
+                Button {
+                    Task {
+                        await refreshStatus()
+                    }
+                } label: {
+                    HStack {
+                        Text("刷新状态")
+                        Spacer()
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .disabled(isLoading)
             }
         }
         .navigationTitle("iCloud 状态")
         .onAppear {
-            checkiCloudStatus()
+            Task {
+                await refreshStatus()
+            }
         }
     }
 
-    private func checkiCloudStatus() {
-        iCloudAvailable = FileManager.default.ubiquityIdentityToken != nil
+    private func refreshStatus() async {
+        isLoading = true
+        errorMessage = nil
+
+        let fileManager = FileManager.default
+        iCloudAvailable = fileManager.ubiquityIdentityToken != nil
+
+        guard iCloudAvailable else {
+            isLoading = false
+            return
+        }
+
+        // 获取容器路径
+        if let containerURL = fileManager.url(forUbiquityContainerIdentifier: nil) {
+            containerPath = containerURL.path
+            let documentsURL = containerURL.appendingPathComponent("Documents")
+            documentsPath = documentsURL.path
+
+            // 确保 Documents 目录存在
+            if !fileManager.fileExists(atPath: documentsURL.path) {
+                try? fileManager.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+            }
+
+            // 列出文件
+            await loadFiles(at: documentsURL, basePath: documentsURL.path)
+        } else {
+            errorMessage = "无法获取 iCloud 容器路径"
+        }
+
+        isLoading = false
+    }
+
+    private func loadFiles(at url: URL, basePath: String) async {
+        let fileManager = FileManager.default
+        var fileList: [iCloudFileInfo] = []
+
+        do {
+            let contents = try fileManager.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey],
+                options: .skipsHiddenFiles
+            )
+
+            for fileURL in contents {
+                let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+                let isDirectory = resourceValues?.isDirectory ?? false
+                let size = resourceValues?.fileSize ?? 0
+
+                let relativePath = String(fileURL.path.dropFirst(basePath.count + 1))
+
+                let info = iCloudFileInfo(
+                    name: fileURL.lastPathComponent,
+                    path: fileURL.path,
+                    relativePath: relativePath.isEmpty ? fileURL.lastPathComponent : relativePath,
+                    isDirectory: isDirectory,
+                    size: Int64(size)
+                )
+                fileList.append(info)
+
+                // 递归加载子目录
+                if isDirectory {
+                    let subContents = try fileManager.contentsOfDirectory(
+                        at: fileURL,
+                        includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+                        options: .skipsHiddenFiles
+                    )
+
+                    for subURL in subContents {
+                        let subValues = try? subURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+                        let subIsDir = subValues?.isDirectory ?? false
+                        let subSize = subValues?.fileSize ?? 0
+
+                        let subRelativePath = String(subURL.path.dropFirst(basePath.count + 1))
+
+                        let subInfo = iCloudFileInfo(
+                            name: subURL.lastPathComponent,
+                            path: subURL.path,
+                            relativePath: subRelativePath,
+                            isDirectory: subIsDir,
+                            size: Int64(subSize)
+                        )
+                        fileList.append(subInfo)
+                    }
+                }
+            }
+        } catch {
+            errorMessage = "读取文件列表失败: \(error.localizedDescription)"
+        }
+
+        files = fileList.sorted { $0.name < $1.name }
+    }
+}
+
+// MARK: - iCloud File Info
+
+struct iCloudFileInfo: Identifiable {
+    let id = UUID()
+    let name: String
+    let path: String
+    let relativePath: String
+    let isDirectory: Bool
+    let size: Int64
+
+    var sizeString: String {
+        if size < 1024 {
+            return "\(size) B"
+        } else if size < 1024 * 1024 {
+            return String(format: "%.1f KB", Double(size) / 1024)
+        } else {
+            return String(format: "%.1f MB", Double(size) / (1024 * 1024))
+        }
     }
 }
 
