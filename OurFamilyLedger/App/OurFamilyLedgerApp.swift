@@ -6,26 +6,57 @@ struct OurFamilyLedgerApp: App {
     let modelContainer: ModelContainer
 
     init() {
+        let schema = Schema([
+            TransactionRecord.self,
+            Member.self,
+            Category.self,
+            Ledger.self
+        ])
+
+        // 明确禁用 CloudKit 同步，SwiftData 仅用于本地缓存
+        // iCloud 用于 CSV 文件同步，不用于 SwiftData
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none
+        )
+
         do {
-            let schema = Schema([
-                TransactionRecord.self,
-                Member.self,
-                Category.self,
-                Ledger.self
-            ])
-            let modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false
-            )
             modelContainer = try ModelContainer(
                 for: schema,
                 configurations: [modelConfiguration]
             )
-
-            // 初始化默认分类
-            initializeDefaultCategories()
         } catch {
+            #if DEBUG
+            // 开发阶段：删除旧数据重新创建
+            print("SwiftData migration failed, resetting database: \(error)")
+            Self.deleteSwiftDataStore()
+
+            do {
+                modelContainer = try ModelContainer(
+                    for: schema,
+                    configurations: [modelConfiguration]
+                )
+            } catch {
+                fatalError("Could not initialize ModelContainer after reset: \(error)")
+            }
+            #else
             fatalError("Could not initialize ModelContainer: \(error)")
+            #endif
+        }
+
+        // 初始化默认分类
+        initializeDefaultCategories()
+    }
+
+    private static func deleteSwiftDataStore() {
+        let fileManager = FileManager.default
+        guard let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+
+        let storeFiles = ["default.store", "default.store-shm", "default.store-wal"]
+        for file in storeFiles {
+            let url = appSupport.appending(path: file)
+            try? fileManager.removeItem(at: url)
         }
     }
 
