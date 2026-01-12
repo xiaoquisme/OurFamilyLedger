@@ -9,5 +9,21 @@
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.com.xiaoquisme.ourfamilyledger</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+			<key>NSUbiquitousContainerName</key>
+			<string>一家账本</string>
+		</dict>
+	</dict>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>
