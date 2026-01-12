@@ -15,6 +15,7 @@
 		38DC43434EC7152EA8EE9BB1 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EF32BB214A29A00AB0244B2 /* Date+Extensions.swift */; };
 		4165769FD74C187B5943658F /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161B7E39CF0AB823C1D25C72 /* ChatViewModel.swift */; };
 		626B1B9C6AC87A2231D7EEDC /* iCloudService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40533553D724F5F8A5197DCD /* iCloudService.swift */; };
+		SYNC5E7V1CE5A7B8C9D0E1F2 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */; };
 		631B24939939C46CA5310D4E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4AAB69C8D226513FEB6A374 /* ContentView.swift */; };
 		80138A787E982C72B613B4A5 /* Decimal+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62375C7B4254F259549AEB4F /* Decimal+Extensions.swift */; };
 		862726239247799E5938D984 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB3BAD3832D7A9AC397D8913 /* KeychainService.swift */; };
@@ -41,6 +42,7 @@
 		33A3B065E6F41F42FB3667C0 /* Member.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Member.swift; sourceTree = "<group>"; };
 		401D1A46C5766F034A1CB33E /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
 		40533553D724F5F8A5197DCD /* iCloudService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudService.swift; sourceTree = "<group>"; };
+		SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		5671FE09D455999353EF21FB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		62375C7B4254F259549AEB4F /* Decimal+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Decimal+Extensions.swift"; sourceTree = "<group>"; };
 		62435557595A07F0B1D9C97A /* ConflictResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConflictResolver.swift; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 				62435557595A07F0B1D9C97A /* ConflictResolver.swift */,
 				FA8EA8555B85CFD2DAAFC15A /* CSVService.swift */,
 				40533553D724F5F8A5197DCD /* iCloudService.swift */,
+				SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				F9A0F282FAA086F93A4B96C4 /* AIServiceProtocol.swift in Sources */,
 				C42DA32222202D4D3DF3145C /* AppleOCRService.swift in Sources */,
 				9A6D878F6CD6F38C66504555 /* CSVService.swift in Sources */,
+				SYNC5E7V1CE5A7B8C9D0E1F2 /* SyncService.swift in Sources */,
 				09F52E5FFAC78D6299A200CC /* Category.swift in Sources */,
 				E79E352462D2CA180F68B6E9 /* ChatView.swift in Sources */,
 				4165769FD74C187B5943658F /* ChatViewModel.swift in Sources */,

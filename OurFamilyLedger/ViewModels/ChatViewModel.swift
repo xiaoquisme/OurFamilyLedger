@@ -259,7 +259,14 @@ final class ChatViewModel: ObservableObject {
         )
         messages.append(message)
 
-        // TODO: 写入 CSV 文件
+        // 写入 iCloud CSV 文件
+        await SyncService.shared.writeTransaction(
+            transaction,
+            categoryName: draft.categoryName,
+            payerName: draft.payerName,
+            participantNames: draft.participantNames,
+            context: modelContext
+        )
     }
 
     /// 确认所有草稿

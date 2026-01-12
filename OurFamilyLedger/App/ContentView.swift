@@ -1,7 +1,10 @@
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: Tab = .chat
+    @State private var hasSynced = false
 
     enum Tab: String, CaseIterable {
         case chat = "记账"
@@ -52,6 +55,12 @@ struct ContentView: View {
                     Label(Tab.settings.rawValue, systemImage: Tab.settings.icon)
                 }
                 .tag(Tab.settings)
+        }
+        .task {
+            // App 启动时从 iCloud 加载数据
+            guard !hasSynced else { return }
+            hasSynced = true
+            await SyncService.shared.loadFromiCloud(context: modelContext)
         }
     }
 }
