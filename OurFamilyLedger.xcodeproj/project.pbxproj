@@ -35,6 +35,7 @@
 		REC1A2B3C4D5E6F7G8H9I0J2 /* RecurringTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = REC1A2B3C4D5E6F7G8H9I0J1 /* RecurringTransaction.swift */; };
 		RECV1A2B3C4D5E6F7G8H9I0J4 /* RecurringTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RECV1A2B3C4D5E6F7G8H9I0J3 /* RecurringTransactionView.swift */; };
 		TXND1A2B3C4D5E6F7G8H9I0J2 /* TransactionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */; };
+		NOTF1A2B3C4D5E6F7G8H9I0J2 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = NOTF1A2B3C4D5E6F7G8H9I0J1 /* NotificationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +70,7 @@
 		REC1A2B3C4D5E6F7G8H9I0J1 /* RecurringTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringTransaction.swift; sourceTree = "<group>"; };
 		RECV1A2B3C4D5E6F7G8H9I0J3 /* RecurringTransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringTransactionView.swift; sourceTree = "<group>"; };
 		TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionDetailView.swift; sourceTree = "<group>"; };
+		NOTF1A2B3C4D5E6F7G8H9I0J1 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -164,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				FB3BAD3832D7A9AC397D8913 /* KeychainService.swift */,
+				NOTF1A2B3C4D5E6F7G8H9I0J1 /* NotificationService.swift */,
 				247E38C35F09AEF468B8134A /* AI */,
 				4AD95426F39DB5D59FFB101A /* OCR */,
 				B609A666FEB597C56CE4E480 /* Storage */,
@@ -330,6 +333,7 @@
 				80138A787E982C72B613B4A5 /* Decimal+Extensions.swift in Sources */,
 				21CE03AD907F225B2B3EAA4E /* FamilyView.swift in Sources */,
 				862726239247799E5938D984 /* KeychainService.swift in Sources */,
+				NOTF1A2B3C4D5E6F7G8H9I0J2 /* NotificationService.swift in Sources */,
 				F319E6538E06C98AD24BCAA2 /* Ledger.swift in Sources */,
 				0F437A2CE324B3E0CD2F8E2A /* Member.swift in Sources */,
 				EFEED6B383DB7B084CE0B923 /* OCRServiceProtocol.swift in Sources */,

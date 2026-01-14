@@ -174,9 +174,9 @@ struct SettingsView: View {
                     Text("账本设置")
                 } footer: {
                     if accountingReminder == "daily" {
-                        Text("每天打开 App 时，如果当天没有记账记录会提醒你")
+                        Text("每天下午 2:00 会收到通知提醒记账，打开 App 时也会提醒")
                     } else if accountingReminder == "monthly" {
-                        Text("每月打开 App 时，如果当月没有记账记录会提醒你")
+                        Text("每月 1 日下午 2:00 会收到通知提醒记账，打开 App 时也会提醒")
                     }
                 }
 
@@ -244,6 +244,25 @@ struct SettingsView: View {
                 // 切换提供商时清空已获取的模型列表
                 fetchedModels = []
                 modelFetchError = nil
+            }
+            .onChange(of: accountingReminder) { _, newValue in
+                Task {
+                    // 如果开启提醒，先请求通知权限
+                    if newValue != "off" {
+                        let granted = await NotificationService.shared.requestAuthorization()
+                        if granted {
+                            await NotificationService.shared.updateReminder(mode: newValue)
+                        }
+                    } else {
+                        NotificationService.shared.cancelAllReminders()
+                    }
+                }
+            }
+            .task {
+                // 启动时同步通知设置
+                if accountingReminder != "off" {
+                    await NotificationService.shared.updateReminder(mode: accountingReminder)
+                }
             }
         }
     }
