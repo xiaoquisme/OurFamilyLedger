@@ -613,13 +613,39 @@ struct CategorySettingsView: View {
 struct CategoryRow: View {
     let category: Category
 
+    private var iconColor: Color {
+        let colorName = category.color
+        switch colorName.lowercased() {
+        case "red": return .red
+        case "orange": return .orange
+        case "yellow": return .yellow
+        case "green": return .green
+        case "blue": return .blue
+        case "purple": return .purple
+        case "pink": return .pink
+        case "gray", "grey": return .gray
+        case "brown": return .brown
+        case "cyan": return .cyan
+        case "mint": return .mint
+        case "teal": return .teal
+        case "indigo": return .indigo
+        default: return .blue
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: category.icon)
-                .foregroundStyle(Color.blue)
-                .frame(width: 24)
+            Circle()
+                .fill(iconColor.opacity(0.15))
+                .frame(width: 44, height: 44)
+                .overlay {
+                    Image(systemName: category.icon)
+                        .font(.system(size: 20))
+                        .foregroundStyle(iconColor)
+                }
 
             Text(category.name)
+                .font(.body)
 
             Spacer()
 
@@ -629,6 +655,7 @@ struct CategoryRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .padding(.vertical, 4)
     }
 }
 
