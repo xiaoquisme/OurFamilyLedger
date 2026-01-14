@@ -4,6 +4,7 @@ import SwiftData
 struct FamilyView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Member.createdAt) private var members: [Member]
+    @AppStorage("defaultMemberId") private var defaultMemberId: String = ""
 
     @State private var showingAddMember = false
     @State private var showingShareSheet = false
@@ -38,13 +39,24 @@ struct FamilyView: View {
                 }
 
                 // 成员列表
-                Section("成员 (\(members.count))") {
+                Section {
                     ForEach(members) { member in
-                        MemberRow(member: member)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedMember = member
+                        MemberRow(
+                            member: member,
+                            isDefault: member.id.uuidString == defaultMemberId
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedMember = member
+                        }
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                setDefaultMember(member)
+                            } label: {
+                                Label("设为默认", systemImage: "checkmark.circle")
                             }
+                            .tint(.green)
+                        }
                     }
                     .onDelete(perform: deleteMembers)
 
@@ -53,6 +65,10 @@ struct FamilyView: View {
                     } label: {
                         Label("添加成员", systemImage: "plus")
                     }
+                } header: {
+                    Text("成员 (\(members.count))")
+                } footer: {
+                    Text("向右滑动成员可设为默认付款人和参与人")
                 }
 
                 // 角色说明
@@ -113,12 +129,17 @@ struct FamilyView: View {
             }
         }
     }
+
+    private func setDefaultMember(_ member: Member) {
+        defaultMemberId = member.id.uuidString
+    }
 }
 
 // MARK: - Member Row
 
 struct MemberRow: View {
     let member: Member
+    var isDefault: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -145,6 +166,16 @@ struct MemberRow: View {
                             .padding(.vertical, 2)
                             .background(Color.blue.opacity(0.1))
                             .foregroundStyle(.blue)
+                            .clipShape(Capsule())
+                    }
+
+                    if isDefault {
+                        Text("默认")
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.green.opacity(0.1))
+                            .foregroundStyle(.green)
                             .clipShape(Capsule())
                     }
                 }
@@ -274,6 +305,7 @@ struct AddMemberView: View {
 struct EditMemberView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @AppStorage("defaultMemberId") private var defaultMemberId: String = ""
 
     let member: Member
 
@@ -281,6 +313,7 @@ struct EditMemberView: View {
     @State private var nickname: String
     @State private var role: MemberRole
     @State private var avatarColor: String
+    @State private var isDefault: Bool
 
     init(member: Member) {
         self.member = member
@@ -288,6 +321,7 @@ struct EditMemberView: View {
         _nickname = State(initialValue: member.nickname)
         _role = State(initialValue: member.role)
         _avatarColor = State(initialValue: member.avatarColor)
+        _isDefault = State(initialValue: UserDefaults.standard.string(forKey: "defaultMemberId") == member.id.uuidString)
     }
 
     var body: some View {
@@ -304,6 +338,12 @@ struct EditMemberView: View {
                             Text(role.rawValue).tag(role)
                         }
                     }
+                }
+
+                Section {
+                    Toggle("设为默认成员", isOn: $isDefault)
+                } footer: {
+                    Text("默认成员将作为记账时的默认付款人和参与人")
                 }
 
                 Section("头像颜色") {
@@ -363,6 +403,15 @@ struct EditMemberView: View {
         member.role = role
         member.avatarColor = avatarColor
         member.updatedAt = Date()
+
+        // 更新默认成员设置
+        if isDefault {
+            defaultMemberId = member.id.uuidString
+        } else if defaultMemberId == member.id.uuidString {
+            // 如果取消默认，且当前成员是默认成员，则清除
+            defaultMemberId = ""
+        }
+
         dismiss()
     }
 }

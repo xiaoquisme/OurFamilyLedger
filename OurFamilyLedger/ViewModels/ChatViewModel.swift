@@ -224,10 +224,17 @@ final class ChatViewModel: ObservableObject {
 
         // 查找或创建参与人
         var participantIds: [UUID] = []
-        for name in draft.participantNames {
-            let id = await findOrCreateMember(name: name)
-            if let id = id {
-                participantIds.append(id)
+        if draft.participantNames.isEmpty {
+            // 没有指定参与人时，使用默认成员
+            if let defaultId = getDefaultMemberId() {
+                participantIds.append(defaultId)
+            }
+        } else {
+            for name in draft.participantNames {
+                let id = await findOrCreateMember(name: name)
+                if let id = id {
+                    participantIds.append(id)
+                }
             }
         }
 
@@ -309,7 +316,12 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func findOrCreateMember(name: String) async -> UUID? {
-        guard let modelContext = modelContext, !name.isEmpty else { return nil }
+        guard let modelContext = modelContext else { return nil }
+
+        // 如果名字为空，返回默认成员
+        if name.isEmpty {
+            return getDefaultMemberId()
+        }
 
         // 查找现有成员
         let descriptor = FetchDescriptor<Member>(
@@ -324,6 +336,13 @@ final class ChatViewModel: ObservableObject {
         let member = Member(name: name)
         modelContext.insert(member)
         return member.id
+    }
+
+    /// 获取默认成员 ID
+    private func getDefaultMemberId() -> UUID? {
+        let defaultMemberIdString = UserDefaults.standard.string(forKey: "defaultMemberId") ?? ""
+        guard !defaultMemberIdString.isEmpty else { return nil }
+        return UUID(uuidString: defaultMemberIdString)
     }
 
     // MARK: - Clarification
