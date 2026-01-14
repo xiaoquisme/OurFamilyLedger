@@ -70,7 +70,17 @@ struct TransactionDetailView: View {
             Section {
                 HStack {
                     Spacer()
-                    VStack(spacing: 8) {
+                    VStack(spacing: 12) {
+                        // 分类图标
+                        Circle()
+                            .fill(categoryColor.opacity(0.1))
+                            .frame(width: 60, height: 60)
+                            .overlay {
+                                Image(systemName: categoryIcon)
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(categoryColor)
+                            }
+
                         Text(transaction.type == .expense ? "支出" : "收入")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -190,9 +200,37 @@ struct TransactionDetailView: View {
         return formatter.string(from: transaction.createdAt)
     }
 
+    private var currentCategory: Category? {
+        guard let categoryId = transaction.categoryId else { return nil }
+        return categories.first { $0.id == categoryId }
+    }
+
     private var categoryName: String {
-        guard let categoryId = transaction.categoryId else { return "未分类" }
-        return categories.first { $0.id == categoryId }?.name ?? "未分类"
+        currentCategory?.name ?? "未分类"
+    }
+
+    private var categoryIcon: String {
+        currentCategory?.icon ?? "tag"
+    }
+
+    private var categoryColor: Color {
+        guard let colorName = currentCategory?.color else { return .blue }
+        switch colorName.lowercased() {
+        case "red": return .red
+        case "orange": return .orange
+        case "yellow": return .yellow
+        case "green": return .green
+        case "blue": return .blue
+        case "purple": return .purple
+        case "pink": return .pink
+        case "gray", "grey": return .gray
+        case "brown": return .brown
+        case "cyan": return .cyan
+        case "mint": return .mint
+        case "teal": return .teal
+        case "indigo": return .indigo
+        default: return .blue
+        }
     }
 
     private var payerName: String {

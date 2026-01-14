@@ -4,6 +4,7 @@ import SwiftData
 struct TransactionListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TransactionRecord.date, order: .reverse) private var transactions: [TransactionRecord]
+    @Query private var categories: [Category]
 
     @State private var searchText = ""
     @State private var selectedCategory: Category?
@@ -11,6 +12,11 @@ struct TransactionListView: View {
     @State private var dateRange: ClosedRange<Date>?
 
     init() {}
+
+    private func category(for transaction: TransactionRecord) -> Category? {
+        guard let categoryId = transaction.categoryId else { return nil }
+        return categories.first { $0.id == categoryId }
+    }
 
     var body: some View {
         NavigationStack {
@@ -47,7 +53,7 @@ struct TransactionListView: View {
                 Section {
                     ForEach(items) { transaction in
                         NavigationLink(value: transaction) {
-                            TransactionRowView(transaction: transaction)
+                            TransactionRowView(transaction: transaction, category: category(for: transaction))
                         }
                     }
                     .onDelete { indexSet in
@@ -136,16 +142,42 @@ struct TransactionListView: View {
 
 struct TransactionRowView: View {
     let transaction: TransactionRecord
+    var category: Category?
+
+    private var iconName: String {
+        category?.icon ?? "tag"
+    }
+
+    private var iconColor: Color {
+        guard let colorName = category?.color else { return .blue }
+        switch colorName.lowercased() {
+        case "red": return .red
+        case "orange": return .orange
+        case "yellow": return .yellow
+        case "green": return .green
+        case "blue": return .blue
+        case "purple": return .purple
+        case "pink": return .pink
+        case "gray", "grey": return .gray
+        case "brown": return .brown
+        case "cyan": return .cyan
+        case "mint": return .mint
+        case "teal": return .teal
+        case "indigo": return .indigo
+        default: return .blue
+        }
+    }
 
     var body: some View {
         HStack(spacing: 12) {
             // 分类图标
             Circle()
-                .fill(Color.blue.opacity(0.1))
+                .fill(iconColor.opacity(0.15))
                 .frame(width: 44, height: 44)
                 .overlay {
-                    Image(systemName: "tag")
-                        .foregroundStyle(.blue)
+                    Image(systemName: iconName)
+                        .font(.system(size: 20))
+                        .foregroundStyle(iconColor)
                 }
 
             // 交易信息
