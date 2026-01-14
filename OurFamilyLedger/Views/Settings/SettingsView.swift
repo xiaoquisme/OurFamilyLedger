@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("aiModel") private var aiModel = "gpt-4o-mini"
     @AppStorage("ocrMode") private var ocrMode = "local"
     @AppStorage("defaultCurrency") private var defaultCurrency = "CNY"
+    @AppStorage("accountingReminder") private var accountingReminder = "off"
 
     @State private var showingAPIKeySettings = false
     @State private var showingTestParse = false
@@ -140,17 +141,42 @@ struct SettingsView: View {
                 }
 
                 // 账本设置
-                Section("账本设置") {
+                Section {
                     Picker("默认货币", selection: $defaultCurrency) {
                         ForEach(SupportedCurrency.allCases, id: \.self) { currency in
                             Text(currency.displayName).tag(currency.rawValue)
                         }
                     }
 
+                    Picker("记账提醒", selection: $accountingReminder) {
+                        Text("关闭").tag("off")
+                        Text("每日提醒").tag("daily")
+                        Text("每月提醒").tag("monthly")
+                    }
+
                     NavigationLink {
                         CategorySettingsView()
                     } label: {
                         Text("分类管理")
+                    }
+
+                    NavigationLink {
+                        RecurringTransactionListView()
+                    } label: {
+                        HStack {
+                            Text("定期交易")
+                            Spacer()
+                            Image(systemName: "arrow.clockwise.circle")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("账本设置")
+                } footer: {
+                    if accountingReminder == "daily" {
+                        Text("每天打开 App 时，如果当天没有记账记录会提醒你")
+                    } else if accountingReminder == "monthly" {
+                        Text("每月打开 App 时，如果当月没有记账记录会提醒你")
                     }
                 }
 
@@ -1175,12 +1201,20 @@ struct ImportDraftRow: View {
 // MARK: - iCloud Status View
 
 struct iCloudStatusView: View {
+    @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var syncService = SyncService.shared
+
     @State private var iCloudAvailable = false
     @State private var containerPath: String?
     @State private var documentsPath: String?
     @State private var files: [iCloudFileInfo] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var showingClearConfirmation = false
+    @State private var isClearing = false
+    @State private var selectedFileForShare: URL?
+    @State private var showingShareSheet = false
+    @State private var isPreparingShare = false
 
     var body: some View {
         List {
@@ -1197,6 +1231,86 @@ struct iCloudStatusView: View {
                             .foregroundStyle(.red)
                     }
                 }
+
+                if let lastSync = syncService.lastSyncTime {
+                    HStack {
+                        Text("上次同步")
+                        Spacer()
+                        Text(lastSync.formatted(date: .abbreviated, time: .shortened))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let error = syncService.syncError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+
+            // 同步操作
+            Section {
+                Button {
+                    Task {
+                        await syncService.syncToiCloud(context: modelContext)
+                        await refreshStatus()
+                    }
+                } label: {
+                    HStack {
+                        Text("同步数据到 iCloud")
+                        Spacer()
+                        if syncService.isSyncing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+                .disabled(syncService.isSyncing)
+
+                Button {
+                    Task {
+                        await syncService.loadFromiCloud(context: modelContext)
+                        await refreshStatus()
+                    }
+                } label: {
+                    HStack {
+                        Text("从 iCloud 加载数据")
+                        Spacer()
+                        if syncService.isSyncing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "icloud.and.arrow.down")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+                .disabled(syncService.isSyncing)
+            } header: {
+                Text("同步操作")
+            } footer: {
+                Text("同步会将本地数据写入 iCloud CSV 文件，方便跨设备共享和备份")
+            }
+
+            // 如何查看文件
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("如何在「文件」App 中查看数据：")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("打开「文件」App", systemImage: "1.circle.fill")
+                        Label("点击「浏览」→「iCloud 云盘」", systemImage: "2.circle.fill")
+                        Label("找到「一家账本」文件夹", systemImage: "3.circle.fill")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            } header: {
+                Text("使用说明")
             }
 
             // 路径信息
@@ -1240,25 +1354,49 @@ struct iCloudStatusView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(files) { file in
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Image(systemName: file.isDirectory ? "folder.fill" : "doc.fill")
-                                        .foregroundStyle(file.isDirectory ? .blue : .gray)
-                                    Text(file.name)
-                                        .fontWeight(.medium)
-                                }
-
-                                Text(file.relativePath)
-                                    .font(.system(.caption2, design: .monospaced))
-                                    .foregroundStyle(.secondary)
-
+                            Button {
                                 if !file.isDirectory {
-                                    Text(file.sizeString)
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
+                                    prepareAndShareFile(at: file.path)
+                                }
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack {
+                                            Image(systemName: file.isDirectory ? "folder.fill" : "doc.fill")
+                                                .foregroundStyle(file.isDirectory ? .blue : .gray)
+                                            Text(file.name)
+                                                .fontWeight(.medium)
+                                                .foregroundStyle(.primary)
+                                        }
+
+                                        Text(file.relativePath)
+                                            .font(.system(.caption2, design: .monospaced))
+                                            .foregroundStyle(.secondary)
+
+                                        if !file.isDirectory {
+                                            Text(file.sizeString)
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    if !file.isDirectory {
+                                        if isPreparingShare && selectedFileForShare?.path == file.path {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                        } else {
+                                            Image(systemName: "square.and.arrow.up")
+                                                .foregroundStyle(.blue)
+                                                .font(.caption)
+                                        }
+                                    }
                                 }
                             }
+                            .buttonStyle(.plain)
                             .padding(.vertical, 4)
+                            .disabled(isPreparingShare)
                         }
                     }
                 } header: {
@@ -1301,11 +1439,56 @@ struct iCloudStatusView: View {
                 }
                 .disabled(isLoading)
             }
+
+            // 危险操作
+            Section {
+                Button(role: .destructive) {
+                    showingClearConfirmation = true
+                } label: {
+                    HStack {
+                        Text("清除 iCloud 数据")
+                        Spacer()
+                        if isClearing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+                .disabled(isClearing || !iCloudAvailable)
+            } header: {
+                Text("危险操作")
+            } footer: {
+                Text("这将删除 iCloud 容器中的所有 CSV 文件，本地数据不受影响")
+            }
         }
         .navigationTitle("iCloud 状态")
         .onAppear {
             Task {
                 await refreshStatus()
+            }
+        }
+        .alert("确认清除", isPresented: $showingClearConfirmation) {
+            Button("取消", role: .cancel) {}
+            Button("清除", role: .destructive) {
+                Task {
+                    isClearing = true
+                    do {
+                        try await syncService.clearICloudData()
+                        await refreshStatus()
+                    } catch {
+                        errorMessage = error.localizedDescription
+                    }
+                    isClearing = false
+                }
+            }
+        } message: {
+            Text("确定要删除 iCloud 容器中的所有数据吗？此操作无法撤销。")
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = selectedFileForShare {
+                ShareSheet(activityItems: [url])
             }
         }
     }
@@ -1401,6 +1584,64 @@ struct iCloudStatusView: View {
         }
 
         files = fileList.sorted { $0.name < $1.name }
+    }
+
+    private func prepareAndShareFile(at path: String) {
+        let fileURL = URL(fileURLWithPath: path)
+        selectedFileForShare = fileURL
+        isPreparingShare = true
+
+        Task {
+            let fileManager = FileManager.default
+
+            // 检查文件是否需要从 iCloud 下载
+            do {
+                // 尝试启动下载（如果文件在云端）
+                try fileManager.startDownloadingUbiquitousItem(at: fileURL)
+
+                // 等待文件下载完成（最多等待 10 秒）
+                var attempts = 0
+                while attempts < 20 {
+                    let resourceValues = try? fileURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
+                    let status = resourceValues?.ubiquitousItemDownloadingStatus
+
+                    if status == .current || fileManager.fileExists(atPath: path) {
+                        // 文件已下载完成
+                        break
+                    }
+
+                    try await Task.sleep(nanoseconds: 500_000_000) // 0.5 秒
+                    attempts += 1
+                }
+            } catch {
+                // 如果不是 iCloud 文件，忽略错误继续
+                print("下载文件时出错（可能不是 iCloud 文件）: \(error)")
+            }
+
+            // 将文件复制到临时目录以确保可以分享
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileURL.lastPathComponent)
+
+            do {
+                // 删除旧的临时文件
+                if fileManager.fileExists(atPath: tempURL.path) {
+                    try fileManager.removeItem(at: tempURL)
+                }
+
+                // 复制到临时目录
+                try fileManager.copyItem(at: fileURL, to: tempURL)
+
+                await MainActor.run {
+                    selectedFileForShare = tempURL
+                    isPreparingShare = false
+                    showingShareSheet = true
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "准备分享文件失败: \(error.localizedDescription)"
+                    isPreparingShare = false
+                }
+            }
+        }
     }
 }
 

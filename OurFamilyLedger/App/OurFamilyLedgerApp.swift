@@ -10,7 +10,8 @@ struct OurFamilyLedgerApp: App {
             TransactionRecord.self,
             Member.self,
             Category.self,
-            Ledger.self
+            Ledger.self,
+            RecurringTransaction.self
         ])
 
         // 明确禁用 CloudKit 同步，SwiftData 仅用于本地缓存
