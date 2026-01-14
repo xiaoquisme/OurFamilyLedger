@@ -33,22 +33,29 @@ final class SyncService: ObservableObject {
     private let containerIdentifier = "iCloud.com.xiaoquisme.ourfamilyledger"
 
     /// 获取 iCloud Documents URL
+    /// 使用 app 的 iCloud 容器，配合 NSUbiquitousContainerIsDocumentScopePublic=true
+    /// 这样文件会在 Files app 中显示为 "一家账本" 文件夹
     private var iCloudDocumentsURL: URL? {
-        fileManager.url(forUbiquityContainerIdentifier: containerIdentifier)?
-            .appendingPathComponent("Documents")
+        guard let containerURL = fileManager.url(forUbiquityContainerIdentifier: containerIdentifier) else {
+            print("iCloud 容器不可用")
+            return nil
+        }
+
+        let documentsURL = containerURL.appendingPathComponent("Documents")
+
+        // 确保 Documents 目录存在
+        if !fileManager.fileExists(atPath: documentsURL.path) {
+            try? fileManager.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        }
+
+        print("iCloud Documents 路径: \(documentsURL.path)")
+        return documentsURL
     }
 
     /// 获取默认账本文件夹 URL
+    /// 直接使用 Documents 目录，因为整个容器在 Files app 中会显示为 "一家账本"
     private var defaultLedgerURL: URL? {
-        guard let documentsURL = iCloudDocumentsURL else { return nil }
-        let ledgerURL = documentsURL.appendingPathComponent("DefaultLedger")
-
-        // 确保目录存在
-        if !fileManager.fileExists(atPath: ledgerURL.path) {
-            try? fileManager.createDirectory(at: ledgerURL, withIntermediateDirectories: true)
-        }
-
-        return ledgerURL
+        return iCloudDocumentsURL
     }
 
     // MARK: - Write Transaction to CSV
@@ -313,5 +320,82 @@ final class SyncService: ObservableObject {
         let member = Member(name: name)
         context.insert(member)
         return member.id
+    }
+
+    // MARK: - Public Status Methods
+
+    /// 获取 iCloud 容器 URL（用于设置页面显示）
+    var containerURL: URL? {
+        fileManager.url(forUbiquityContainerIdentifier: containerIdentifier)
+    }
+
+    /// 获取 Documents URL（用于设置页面显示）
+    var documentsURL: URL? {
+        iCloudDocumentsURL
+    }
+
+    /// 检查 iCloud 是否可用
+    var isICloudAvailable: Bool {
+        fileManager.url(forUbiquityContainerIdentifier: containerIdentifier) != nil
+    }
+
+    /// 列出所有 CSV 文件
+    func listCSVFiles() -> [(name: String, size: Int64, modifiedDate: Date?)] {
+        guard let documentsURL = iCloudDocumentsURL else { return [] }
+
+        var files: [(name: String, size: Int64, modifiedDate: Date?)] = []
+
+        do {
+            let contents = try fileManager.contentsOfDirectory(
+                at: documentsURL,
+                includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey],
+                options: .skipsHiddenFiles
+            )
+
+            for fileURL in contents where fileURL.pathExtension == "csv" {
+                let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
+                files.append((
+                    name: fileURL.lastPathComponent,
+                    size: Int64(resourceValues?.fileSize ?? 0),
+                    modifiedDate: resourceValues?.contentModificationDate
+                ))
+            }
+        } catch {
+            print("列出文件失败: \(error)")
+        }
+
+        return files.sorted { $0.name < $1.name }
+    }
+
+    /// 清除 iCloud 容器中的所有数据
+    func clearICloudData() async throws {
+        guard let containerURL = fileManager.url(forUbiquityContainerIdentifier: containerIdentifier) else {
+            throw NSError(domain: "SyncService", code: 1, userInfo: [NSLocalizedDescriptionKey: "iCloud 容器不可用"])
+        }
+
+        let documentsURL = containerURL.appendingPathComponent("Documents")
+
+        guard fileManager.fileExists(atPath: documentsURL.path) else {
+            return // 目录不存在，无需清理
+        }
+
+        do {
+            let contents = try fileManager.contentsOfDirectory(
+                at: documentsURL,
+                includingPropertiesForKeys: nil,
+                options: .skipsHiddenFiles
+            )
+
+            for itemURL in contents {
+                try fileManager.removeItem(at: itemURL)
+                print("已删除: \(itemURL.lastPathComponent)")
+            }
+
+            syncError = nil
+            print("iCloud 数据已清除")
+        } catch {
+            syncError = "清除失败: \(error.localizedDescription)"
+            throw error
+        }
     }
 }
