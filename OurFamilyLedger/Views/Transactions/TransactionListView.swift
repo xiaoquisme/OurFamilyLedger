@@ -46,7 +46,9 @@ struct TransactionListView: View {
             ForEach(groupedTransactions, id: \.key) { date, items in
                 Section {
                     ForEach(items) { transaction in
-                        TransactionRowView(transaction: transaction)
+                        NavigationLink(value: transaction) {
+                            TransactionRowView(transaction: transaction)
+                        }
                     }
                     .onDelete { indexSet in
                         deleteTransactions(items: items, at: indexSet)
@@ -62,6 +64,9 @@ struct TransactionListView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .navigationDestination(for: TransactionRecord.self) { transaction in
+            TransactionDetailView(transaction: transaction)
+        }
     }
 
     private var filteredTransactions: [TransactionRecord] {
