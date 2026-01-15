@@ -63,3 +63,4 @@ secrets.json
 # Claude
 .claude/plans/
 .claude-trace/
+CLAUDE.md
