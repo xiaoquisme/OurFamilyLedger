@@ -20,6 +20,7 @@ struct TransactionDetailView: View {
     @State private var editType: TransactionType = .expense
     @State private var editCategoryId: UUID?
     @State private var editPayerId: UUID?
+    @State private var editParticipantIds: Set<UUID> = []
 
     var body: some View {
         List {
@@ -170,10 +171,36 @@ struct TransactionDetailView: View {
                 Picker("付款人", selection: $editPayerId) {
                     Text("不选择").tag(nil as UUID?)
                     ForEach(members) { member in
-                        Text(member.name).tag(member.id as UUID?)
+                        Text(member.displayName).tag(member.id as UUID?)
                     }
                 }
             }
+
+            Section("参与人") {
+                ForEach(members) { member in
+                    Button {
+                        toggleParticipant(member.id)
+                    } label: {
+                        HStack {
+                            Text(member.displayName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if editParticipantIds.contains(member.id) {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.blue)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func toggleParticipant(_ id: UUID) {
+        if editParticipantIds.contains(id) {
+            editParticipantIds.remove(id)
+        } else {
+            editParticipantIds.insert(id)
         }
     }
 
@@ -273,6 +300,7 @@ struct TransactionDetailView: View {
         editType = transaction.type
         editCategoryId = transaction.categoryId
         editPayerId = transaction.payerId
+        editParticipantIds = Set(transaction.participantIds)
         isEditing = true
     }
 
@@ -290,6 +318,7 @@ struct TransactionDetailView: View {
         transaction.type = editType
         transaction.categoryId = editCategoryId
         transaction.payerId = editPayerId
+        transaction.participantIds = Array(editParticipantIds)
         transaction.updatedAt = Date()
 
         try? modelContext.save()
