@@ -103,8 +103,9 @@ final class ChatViewModel: ObservableObject {
                 )
                 messages.append(assistantMessage)
             } else {
-                // 添加待确认的草稿
-                pendingDrafts.append(contentsOf: drafts)
+                // 应用默认成员并添加待确认的草稿
+                let draftsWithDefaultMember = applyDefaultMember(to: drafts)
+                pendingDrafts.append(contentsOf: draftsWithDefaultMember)
 
                 let countText = drafts.count > 1 ? "\(drafts.count)笔交易" : "一笔交易"
                 let assistantMessage = ChatMessage(
@@ -343,6 +344,64 @@ final class ChatViewModel: ObservableObject {
         let defaultMemberIdString = UserDefaults.standard.string(forKey: "defaultMemberId") ?? ""
         guard !defaultMemberIdString.isEmpty else { return nil }
         return UUID(uuidString: defaultMemberIdString)
+    }
+
+    /// 获取默认成员名字
+    private func getDefaultMemberName() -> String? {
+        guard let modelContext = modelContext,
+              let defaultId = getDefaultMemberId() else { return nil }
+
+        let descriptor = FetchDescriptor<Member>(
+            predicate: #Predicate { $0.id == defaultId }
+        )
+
+        if let member = try? modelContext.fetch(descriptor).first {
+            return member.displayName
+        }
+        return nil
+    }
+
+    /// 为草稿填充默认成员
+    private func applyDefaultMember(to drafts: [TransactionDraft]) -> [TransactionDraft] {
+        guard let defaultName = getDefaultMemberName() else { return drafts }
+
+        return drafts.map { draft in
+            var updated = draft
+            if draft.payerName.isEmpty {
+                updated = TransactionDraft(
+                    id: draft.id,
+                    date: draft.date,
+                    amount: draft.amount,
+                    type: draft.type,
+                    categoryName: draft.categoryName,
+                    payerName: defaultName,
+                    participantNames: draft.participantNames.isEmpty ? [defaultName] : draft.participantNames,
+                    note: draft.note,
+                    merchant: draft.merchant,
+                    source: draft.source,
+                    ocrText: draft.ocrText,
+                    confidenceAmount: draft.confidenceAmount,
+                    confidenceDate: draft.confidenceDate
+                )
+            } else if draft.participantNames.isEmpty {
+                updated = TransactionDraft(
+                    id: draft.id,
+                    date: draft.date,
+                    amount: draft.amount,
+                    type: draft.type,
+                    categoryName: draft.categoryName,
+                    payerName: draft.payerName,
+                    participantNames: [defaultName],
+                    note: draft.note,
+                    merchant: draft.merchant,
+                    source: draft.source,
+                    ocrText: draft.ocrText,
+                    confidenceAmount: draft.confidenceAmount,
+                    confidenceDate: draft.confidenceDate
+                )
+            }
+            return updated
+        }
     }
 
     // MARK: - Clarification
