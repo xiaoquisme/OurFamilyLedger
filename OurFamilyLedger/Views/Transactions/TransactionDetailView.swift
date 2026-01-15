@@ -106,9 +106,9 @@ struct TransactionDetailView: View {
             // 付款信息
             Section("付款信息") {
                 DetailRow(title: "付款人", value: payerName)
+                DetailRow(title: "参与人", value: participantNamesText)
 
                 if transaction.participantIds.count > 1 {
-                    DetailRow(title: "参与人数", value: "\(transaction.participantIds.count)人")
                     DetailRow(title: "人均金额", value: "¥\(splitAmountText)")
                 }
             }
@@ -235,7 +235,17 @@ struct TransactionDetailView: View {
 
     private var payerName: String {
         guard let payerId = transaction.payerId else { return "未指定" }
-        return members.first { $0.id == payerId }?.name ?? "未指定"
+        return members.first { $0.id == payerId }?.displayName ?? "未指定"
+    }
+
+    private var participantNamesText: String {
+        if transaction.participantIds.isEmpty {
+            return "未指定"
+        }
+        let names = transaction.participantIds.compactMap { id in
+            members.first { $0.id == id }?.displayName
+        }
+        return names.isEmpty ? "未指定" : names.joined(separator: "、")
     }
 
     private var splitAmountText: String {
