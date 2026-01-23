@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("accountingReminder") private var accountingReminder = "off"
     @AppStorage("reminderHour") private var reminderHour = 14
     @AppStorage("reminderMinute") private var reminderMinute = 0
+    @AppStorage("reminderMessage") private var reminderMessage = "记账时间到了，赶紧记一笔吧！"
 
     @State private var showingAPIKeySettings = false
     @State private var showingTestParse = false
@@ -170,18 +171,32 @@ struct SettingsView: View {
                                     let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
                                     reminderHour = components.hour ?? 14
                                     reminderMinute = components.minute ?? 0
-                                    // 更新通知时间
+                                    // 更新通知
                                     Task {
                                         await NotificationService.shared.updateReminder(
                                             mode: accountingReminder,
                                             hour: reminderHour,
-                                            minute: reminderMinute
+                                            minute: reminderMinute,
+                                            message: reminderMessage
                                         )
                                     }
                                 }
                             ),
                             displayedComponents: .hourAndMinute
                         )
+
+                        TextField("提醒内容", text: $reminderMessage)
+                            .onChange(of: reminderMessage) { _, newMessage in
+                                // 更新通知内容
+                                Task {
+                                    await NotificationService.shared.updateReminder(
+                                        mode: accountingReminder,
+                                        hour: reminderHour,
+                                        minute: reminderMinute,
+                                        message: newMessage
+                                    )
+                                }
+                            }
                     }
 
                     NavigationLink {
@@ -284,7 +299,8 @@ struct SettingsView: View {
                             await NotificationService.shared.updateReminder(
                                 mode: newValue,
                                 hour: reminderHour,
-                                minute: reminderMinute
+                                minute: reminderMinute,
+                                message: reminderMessage
                             )
                         }
                     } else {
@@ -298,7 +314,8 @@ struct SettingsView: View {
                     await NotificationService.shared.updateReminder(
                         mode: accountingReminder,
                         hour: reminderHour,
-                        minute: reminderMinute
+                        minute: reminderMinute,
+                        message: reminderMessage
                     )
                 }
             }

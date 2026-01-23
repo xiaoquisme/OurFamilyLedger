@@ -33,7 +33,7 @@ class NotificationService {
     // MARK: - 记账提醒
 
     /// 设置每日记账提醒
-    func scheduleDailyReminder(hour: Int = 14, minute: Int = 0) async {
+    func scheduleDailyReminder(hour: Int = 14, minute: Int = 0, message: String = "记账时间到了，赶紧记一笔吧！") async {
         // 先取消现有提醒
         cancelDailyReminder()
 
@@ -47,7 +47,7 @@ class NotificationService {
         // 创建通知内容
         let content = UNMutableNotificationContent()
         content.title = "记账提醒"
-        content.body = "记账时间到了，赶紧记一笔吧！"
+        content.body = message
         content.sound = .default
 
         // 设置每天指定时间触发
@@ -72,7 +72,7 @@ class NotificationService {
     }
 
     /// 设置每月记账提醒（每月1日指定时间）
-    func scheduleMonthlyReminder(hour: Int = 14, minute: Int = 0) async {
+    func scheduleMonthlyReminder(hour: Int = 14, minute: Int = 0, message: String = "记账时间到了，赶紧记一笔吧！") async {
         // 先取消现有提醒
         cancelMonthlyReminder()
 
@@ -86,7 +86,7 @@ class NotificationService {
         // 创建通知内容
         let content = UNMutableNotificationContent()
         content.title = "记账提醒"
-        content.body = "记账时间到了，赶紧记一笔吧！"
+        content.body = message
         content.sound = .default
 
         // 设置每月1日指定时间触发
@@ -130,15 +130,15 @@ class NotificationService {
     }
 
     /// 根据设置更新提醒
-    func updateReminder(mode: String, hour: Int = 14, minute: Int = 0) async {
+    func updateReminder(mode: String, hour: Int = 14, minute: Int = 0, message: String = "记账时间到了，赶紧记一笔吧！") async {
         // 先取消所有提醒
         cancelAllReminders()
 
         switch mode {
         case "daily":
-            await scheduleDailyReminder(hour: hour, minute: minute)
+            await scheduleDailyReminder(hour: hour, minute: minute, message: message)
         case "monthly":
-            await scheduleMonthlyReminder(hour: hour, minute: minute)
+            await scheduleMonthlyReminder(hour: hour, minute: minute, message: message)
         default:
             // "off" 或其他值，不设置提醒
             break
