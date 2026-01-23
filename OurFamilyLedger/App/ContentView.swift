@@ -5,11 +5,12 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("accountingReminder") private var accountingReminder = "off"
+    @AppStorage("lastRecurringCheckDate") private var lastRecurringCheckDateString = ""
 
     @State private var selectedTab: Tab = .chat
     @State private var hasSynced = false
     @State private var hasCheckedReminder = false
-    @State private var hasCheckedRecurringToday = false
+    @State private var hasCheckedRecurringThisSession = false
 
     // 通用记账提醒
     @State private var showingReminder = false
@@ -70,13 +71,14 @@ struct ContentView: View {
                 .tag(Tab.settings)
         }
         .task {
-            // App 启动时从 iCloud 加载数据
-            guard !hasSynced else { return }
-            hasSynced = true
-            await SyncService.shared.loadFromiCloud(context: modelContext)
+            // App 启动时从 iCloud 加载数据 (只执行一次)
+            if !hasSynced {
+                hasSynced = true
+                await SyncService.shared.loadFromiCloud(context: modelContext)
+            }
 
-            // 检查定期交易
-            checkRecurringTransactions()
+            // 检查定期交易 (每天检查一次)
+            checkRecurringTransactionsIfNeeded()
 
             // 检查通用记账提醒
             checkAccountingReminder()
@@ -109,12 +111,43 @@ struct ContentView: View {
                 #if DEBUG
                 print("📱 App 进入前台，检查定期交易...")
                 #endif
-                checkRecurringTransactions()
+                checkRecurringTransactionsIfNeeded()
             }
         }
     }
 
     // MARK: - 定期交易检查
+
+    private var todayDateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+
+    private func checkRecurringTransactionsIfNeeded() {
+        let today = todayDateString
+
+        // 如果今天已经检查过且在本次会话中已检查，跳过
+        if lastRecurringCheckDateString == today && hasCheckedRecurringThisSession {
+            #if DEBUG
+            print("📋 今天已检查过定期交易，跳过")
+            #endif
+            return
+        }
+
+        // 标记本次会话已检查
+        hasCheckedRecurringThisSession = true
+
+        // 如果是今天第一次检查，执行检查并更新日期
+        if lastRecurringCheckDateString != today {
+            lastRecurringCheckDateString = today
+            #if DEBUG
+            print("📋 新的一天，执行定期交易检查")
+            #endif
+        }
+
+        checkRecurringTransactions()
+    }
 
     private func checkRecurringTransactions() {
         // 如果弹窗已经在显示，不重复检查
