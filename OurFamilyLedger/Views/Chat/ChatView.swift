@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import Photos
 
 struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel = ChatViewModel()
 
     @State private var messageText = ""
@@ -11,6 +13,10 @@ struct ChatView: View {
     @State private var selectedImages: [UIImage] = []
     @State private var editingDraft: TransactionDraft?
     @FocusState private var isInputFocused: Bool
+
+    // 最近截图提示
+    @State private var recentScreenshot: UIImage?
+    @State private var recentScreenshotAsset: PHAsset?
 
     var body: some View {
         NavigationStack {
@@ -63,7 +69,9 @@ struct ChatView: View {
                     selectedImages: $selectedImages,
                     isProcessing: viewModel.isProcessing,
                     isInputFocused: $isInputFocused,
-                    onSend: sendMessage
+                    recentScreenshot: $recentScreenshot,
+                    onSend: sendMessage,
+                    onUseScreenshot: useRecentScreenshot
                 )
             }
             .navigationTitle("记账")
@@ -81,6 +89,12 @@ struct ChatView: View {
             }
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
+                checkForRecentScreenshot()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    checkForRecentScreenshot()
+                }
             }
             .sheet(item: $editingDraft) { draft in
                 EditDraftView(draft: draft) { updatedDraft in
@@ -110,6 +124,88 @@ struct ChatView: View {
     private func confirmDraft(_ draft: TransactionDraft) {
         Task {
             await viewModel.confirmDraft(draft)
+        }
+    }
+
+    // MARK: - Screenshot Detection
+
+    private func checkForRecentScreenshot() {
+        // 请求相册权限
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
+            guard status == .authorized || status == .limited else { return }
+
+            DispatchQueue.main.async {
+                fetchRecentScreenshot()
+            }
+        }
+    }
+
+    private func fetchRecentScreenshot() {
+        let fetchOptions = PHFetchOptions()
+        // 只获取截图，按创建时间倒序
+        fetchOptions.predicate = NSPredicate(
+            format: "(mediaSubtype & %d) != 0",
+            PHAssetMediaSubtype.photoScreenshot.rawValue
+        )
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.fetchLimit = 1
+
+        let assets = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+
+        guard let asset = assets.firstObject,
+              let creationDate = asset.creationDate else {
+            recentScreenshot = nil
+            recentScreenshotAsset = nil
+            return
+        }
+
+        // 只显示最近 2 分钟内的截图
+        let twoMinutesAgo = Date().addingTimeInterval(-120)
+        guard creationDate > twoMinutesAgo else {
+            recentScreenshot = nil
+            recentScreenshotAsset = nil
+            return
+        }
+
+        // 获取缩略图
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .fastFormat
+        options.resizeMode = .fast
+        options.isSynchronous = false
+
+        PHImageManager.default().requestImage(
+            for: asset,
+            targetSize: CGSize(width: 100, height: 100),
+            contentMode: .aspectFill,
+            options: options
+        ) { image, _ in
+            DispatchQueue.main.async {
+                self.recentScreenshot = image
+                self.recentScreenshotAsset = asset
+            }
+        }
+    }
+
+    private func useRecentScreenshot() {
+        guard let asset = recentScreenshotAsset else { return }
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.isSynchronous = false
+
+        PHImageManager.default().requestImage(
+            for: asset,
+            targetSize: PHImageManagerMaximumSize,
+            contentMode: .default,
+            options: options
+        ) { image, _ in
+            DispatchQueue.main.async {
+                if let image = image {
+                    self.selectedImages.append(image)
+                }
+                self.recentScreenshot = nil
+                self.recentScreenshotAsset = nil
+            }
         }
     }
 }
@@ -399,10 +495,55 @@ struct ChatInputView: View {
     @Binding var selectedImages: [UIImage]
     let isProcessing: Bool
     var isInputFocused: FocusState<Bool>.Binding
+    @Binding var recentScreenshot: UIImage?
     let onSend: () -> Void
+    let onUseScreenshot: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
+            // 最近截图提示
+            if let screenshot = recentScreenshot {
+                HStack(spacing: 8) {
+                    Image(uiImage: screenshot)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.blue, lineWidth: 2)
+                        )
+
+                    Text("发送刚刚截的图？")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Button {
+                        onUseScreenshot()
+                    } label: {
+                        Text("使用")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                    }
+
+                    Button {
+                        recentScreenshot = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.gray)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
+            }
+
             // 已选图片预览
             if !selectedImages.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
