@@ -215,51 +215,9 @@ struct ContentView: View {
         // 如果已经有定期交易弹窗，先不显示通用提醒
         guard !showingRecurringConfirmation else { return }
 
-        let calendar = Calendar.current
-        let now = Date()
-
-        do {
-            if accountingReminder == "daily" {
-                let startOfDay = calendar.startOfDay(for: now)
-                let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-
-                let descriptor = FetchDescriptor<TransactionRecord>(
-                    predicate: #Predicate<TransactionRecord> { transaction in
-                        transaction.date >= startOfDay && transaction.date < endOfDay
-                    }
-                )
-
-                let count = try modelContext.fetchCount(descriptor)
-
-                if count == 0 {
-                    reminderMessage = "今天还没有记账哦，要记一笔吗？"
-                    showingReminder = true
-                }
-
-            } else if accountingReminder == "monthly" {
-                let components = calendar.dateComponents([.year, .month], from: now)
-                let startOfMonth = calendar.date(from: components)!
-                let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth)!
-
-                let descriptor = FetchDescriptor<TransactionRecord>(
-                    predicate: #Predicate<TransactionRecord> { transaction in
-                        transaction.date >= startOfMonth && transaction.date < endOfMonth
-                    }
-                )
-
-                let count = try modelContext.fetchCount(descriptor)
-
-                if count == 0 {
-                    let monthFormatter = DateFormatter()
-                    monthFormatter.dateFormat = "M月"
-                    let monthStr = monthFormatter.string(from: now)
-                    reminderMessage = "\(monthStr)还没有记账记录，要开始记账吗？"
-                    showingReminder = true
-                }
-            }
-        } catch {
-            print("检查记账记录失败: \(error)")
-        }
+        // 直接显示记账提醒，不检查是否已记账
+        reminderMessage = "记账时间到了，赶紧记一笔吧！"
+        showingReminder = true
     }
 }
 

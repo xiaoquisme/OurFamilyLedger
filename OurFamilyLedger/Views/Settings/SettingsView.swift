@@ -7,6 +7,8 @@ struct SettingsView: View {
     @AppStorage("ocrMode") private var ocrMode = "local"
     @AppStorage("defaultCurrency") private var defaultCurrency = "CNY"
     @AppStorage("accountingReminder") private var accountingReminder = "off"
+    @AppStorage("reminderHour") private var reminderHour = 14
+    @AppStorage("reminderMinute") private var reminderMinute = 0
 
     @State private var showingAPIKeySettings = false
     @State private var showingTestParse = false
@@ -154,6 +156,34 @@ struct SettingsView: View {
                         Text("每月提醒").tag("monthly")
                     }
 
+                    if accountingReminder != "off" {
+                        DatePicker(
+                            "提醒时间",
+                            selection: Binding(
+                                get: {
+                                    var components = DateComponents()
+                                    components.hour = reminderHour
+                                    components.minute = reminderMinute
+                                    return Calendar.current.date(from: components) ?? Date()
+                                },
+                                set: { newDate in
+                                    let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                                    reminderHour = components.hour ?? 14
+                                    reminderMinute = components.minute ?? 0
+                                    // 更新通知时间
+                                    Task {
+                                        await NotificationService.shared.updateReminder(
+                                            mode: accountingReminder,
+                                            hour: reminderHour,
+                                            minute: reminderMinute
+                                        )
+                                    }
+                                }
+                            ),
+                            displayedComponents: .hourAndMinute
+                        )
+                    }
+
                     NavigationLink {
                         CategorySettingsView()
                     } label: {
@@ -174,9 +204,9 @@ struct SettingsView: View {
                     Text("账本设置")
                 } footer: {
                     if accountingReminder == "daily" {
-                        Text("每天下午 2:00 会收到通知提醒记账，打开 App 时也会提醒")
+                        Text("每天 \(String(format: "%02d:%02d", reminderHour, reminderMinute)) 会收到通知提醒记账")
                     } else if accountingReminder == "monthly" {
-                        Text("每月 1 日下午 2:00 会收到通知提醒记账，打开 App 时也会提醒")
+                        Text("每月 1 日 \(String(format: "%02d:%02d", reminderHour, reminderMinute)) 会收到通知提醒记账")
                     }
                 }
 
@@ -251,7 +281,11 @@ struct SettingsView: View {
                     if newValue != "off" {
                         let granted = await NotificationService.shared.requestAuthorization()
                         if granted {
-                            await NotificationService.shared.updateReminder(mode: newValue)
+                            await NotificationService.shared.updateReminder(
+                                mode: newValue,
+                                hour: reminderHour,
+                                minute: reminderMinute
+                            )
                         }
                     } else {
                         NotificationService.shared.cancelAllReminders()
@@ -261,7 +295,11 @@ struct SettingsView: View {
             .task {
                 // 启动时同步通知设置
                 if accountingReminder != "off" {
-                    await NotificationService.shared.updateReminder(mode: accountingReminder)
+                    await NotificationService.shared.updateReminder(
+                        mode: accountingReminder,
+                        hour: reminderHour,
+                        minute: reminderMinute
+                    )
                 }
             }
         }

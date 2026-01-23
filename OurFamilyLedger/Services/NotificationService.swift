@@ -32,8 +32,8 @@ class NotificationService {
 
     // MARK: - 记账提醒
 
-    /// 设置每日记账提醒（每天下午 2:00）
-    func scheduleDailyReminder() async {
+    /// 设置每日记账提醒
+    func scheduleDailyReminder(hour: Int = 14, minute: Int = 0) async {
         // 先取消现有提醒
         cancelDailyReminder()
 
@@ -47,13 +47,13 @@ class NotificationService {
         // 创建通知内容
         let content = UNMutableNotificationContent()
         content.title = "记账提醒"
-        content.body = "今天还没有记账哦，记得记录一下今天的支出吧！"
+        content.body = "记账时间到了，赶紧记一笔吧！"
         content.sound = .default
 
-        // 设置每天下午 2:00 触发
+        // 设置每天指定时间触发
         var dateComponents = DateComponents()
-        dateComponents.hour = 14
-        dateComponents.minute = 0
+        dateComponents.hour = hour
+        dateComponents.minute = minute
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
 
@@ -65,14 +65,14 @@ class NotificationService {
 
         do {
             try await notificationCenter.add(request)
-            print("✅ 每日记账提醒已设置（每天 14:00）")
+            print("✅ 每日记账提醒已设置（每天 \(String(format: "%02d:%02d", hour, minute))）")
         } catch {
             print("设置每日提醒失败: \(error)")
         }
     }
 
-    /// 设置每月记账提醒（每月1日下午 2:00）
-    func scheduleMonthlyReminder() async {
+    /// 设置每月记账提醒（每月1日指定时间）
+    func scheduleMonthlyReminder(hour: Int = 14, minute: Int = 0) async {
         // 先取消现有提醒
         cancelMonthlyReminder()
 
@@ -86,14 +86,14 @@ class NotificationService {
         // 创建通知内容
         let content = UNMutableNotificationContent()
         content.title = "记账提醒"
-        content.body = "新的一月开始了，记得记录这个月的支出吧！"
+        content.body = "记账时间到了，赶紧记一笔吧！"
         content.sound = .default
 
-        // 设置每月1日下午 2:00 触发
+        // 设置每月1日指定时间触发
         var dateComponents = DateComponents()
         dateComponents.day = 1
-        dateComponents.hour = 14
-        dateComponents.minute = 0
+        dateComponents.hour = hour
+        dateComponents.minute = minute
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
 
@@ -105,7 +105,7 @@ class NotificationService {
 
         do {
             try await notificationCenter.add(request)
-            print("✅ 每月记账提醒已设置（每月1日 14:00）")
+            print("✅ 每月记账提醒已设置（每月1日 \(String(format: "%02d:%02d", hour, minute))）")
         } catch {
             print("设置每月提醒失败: \(error)")
         }
@@ -130,15 +130,15 @@ class NotificationService {
     }
 
     /// 根据设置更新提醒
-    func updateReminder(mode: String) async {
+    func updateReminder(mode: String, hour: Int = 14, minute: Int = 0) async {
         // 先取消所有提醒
         cancelAllReminders()
 
         switch mode {
         case "daily":
-            await scheduleDailyReminder()
+            await scheduleDailyReminder(hour: hour, minute: minute)
         case "monthly":
-            await scheduleMonthlyReminder()
+            await scheduleMonthlyReminder(hour: hour, minute: minute)
         default:
             // "off" 或其他值，不设置提醒
             break
