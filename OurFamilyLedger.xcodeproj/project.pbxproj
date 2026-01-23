@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		ACCR1A2B3C4D5E6F7G8H9I0J2 /* AccountingReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */; };
+		REML1A2B3C4D5E6F7G8H9I0J2 /* RemindersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */; };
 		09F52E5FFAC78D6299A200CC /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEA8DFFF81AB02CC23A80B3 /* Category.swift */; };
 		0F437A2CE324B3E0CD2F8E2A /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A3B065E6F41F42FB3667C0 /* Member.swift */; };
 		120A336CD0F03FA3EB70C11E /* ConflictResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62435557595A07F0B1D9C97A /* ConflictResolver.swift */; };
@@ -71,6 +73,8 @@
 		RECV1A2B3C4D5E6F7G8H9I0J3 /* RecurringTransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringTransactionView.swift; sourceTree = "<group>"; };
 		SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionDetailView.swift; sourceTree = "<group>"; };
+		ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountingReminder.swift; sourceTree = "<group>"; };
+		REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -178,6 +182,7 @@
 			isa = PBXGroup;
 			children = (
 				RECV1A2B3C4D5E6F7G8H9I0J3 /* RecurringTransactionView.swift */,
+				REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */,
 				5671FE09D455999353EF21FB /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -227,6 +232,7 @@
 		B1723E68BB54328A10D59A13 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */,
 				7BEA8DFFF81AB02CC23A80B3 /* Category.swift */,
 				D5054C55889D73A679188E55 /* Ledger.swift */,
 				33A3B065E6F41F42FB3667C0 /* Member.swift */,
@@ -348,6 +354,8 @@
 				626B1B9C6AC87A2231D7EEDC /* iCloudService.swift in Sources */,
 				REC1A2B3C4D5E6F7G8H9I0J2 /* RecurringTransaction.swift in Sources */,
 				RECV1A2B3C4D5E6F7G8H9I0J4 /* RecurringTransactionView.swift in Sources */,
+				ACCR1A2B3C4D5E6F7G8H9I0J2 /* AccountingReminder.swift in Sources */,
+				REML1A2B3C4D5E6F7G8H9I0J2 /* RemindersListView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -422,6 +430,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = OurFamilyLedger/OurFamilyLedger.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -510,6 +519,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = OurFamilyLedger/OurFamilyLedger.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;

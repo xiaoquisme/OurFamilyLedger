@@ -6,11 +6,7 @@ struct SettingsView: View {
     @AppStorage("aiModel") private var aiModel = "gpt-4o-mini"
     @AppStorage("ocrMode") private var ocrMode = "local"
     @AppStorage("defaultCurrency") private var defaultCurrency = "CNY"
-    @AppStorage("accountingReminder") private var accountingReminder = "off"
-    @AppStorage("reminderHour") private var reminderHour = 14
-    @AppStorage("reminderMinute") private var reminderMinute = 0
-    @AppStorage("reminderMessage") private var reminderMessage = "记账时间到了，赶紧记一笔吧！"
-
+    
     @State private var showingAPIKeySettings = false
     @State private var showingTestParse = false
     @State private var showingExportSheet = false
@@ -151,52 +147,10 @@ struct SettingsView: View {
                         }
                     }
 
-                    Picker("记账提醒", selection: $accountingReminder) {
-                        Text("关闭").tag("off")
-                        Text("每日提醒").tag("daily")
-                        Text("每月提醒").tag("monthly")
-                    }
-
-                    if accountingReminder != "off" {
-                        DatePicker(
-                            "提醒时间",
-                            selection: Binding(
-                                get: {
-                                    var components = DateComponents()
-                                    components.hour = reminderHour
-                                    components.minute = reminderMinute
-                                    return Calendar.current.date(from: components) ?? Date()
-                                },
-                                set: { newDate in
-                                    let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
-                                    reminderHour = components.hour ?? 14
-                                    reminderMinute = components.minute ?? 0
-                                    // 更新通知
-                                    Task {
-                                        await NotificationService.shared.updateReminder(
-                                            mode: accountingReminder,
-                                            hour: reminderHour,
-                                            minute: reminderMinute,
-                                            message: reminderMessage
-                                        )
-                                    }
-                                }
-                            ),
-                            displayedComponents: .hourAndMinute
-                        )
-
-                        TextField("提醒内容", text: $reminderMessage)
-                            .onChange(of: reminderMessage) { _, newMessage in
-                                // 更新通知内容
-                                Task {
-                                    await NotificationService.shared.updateReminder(
-                                        mode: accountingReminder,
-                                        hour: reminderHour,
-                                        minute: reminderMinute,
-                                        message: newMessage
-                                    )
-                                }
-                            }
+                    NavigationLink {
+                        RemindersListView()
+                    } label: {
+                        Text("记账提醒")
                     }
 
                     NavigationLink {
@@ -217,12 +171,6 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("账本设置")
-                } footer: {
-                    if accountingReminder == "daily" {
-                        Text("每天 \(String(format: "%02d:%02d", reminderHour, reminderMinute)) 会收到通知提醒记账")
-                    } else if accountingReminder == "monthly" {
-                        Text("每月 1 日 \(String(format: "%02d:%02d", reminderHour, reminderMinute)) 会收到通知提醒记账")
-                    }
                 }
 
                 // 数据
@@ -289,35 +237,6 @@ struct SettingsView: View {
                 // 切换提供商时清空已获取的模型列表
                 fetchedModels = []
                 modelFetchError = nil
-            }
-            .onChange(of: accountingReminder) { _, newValue in
-                Task {
-                    // 如果开启提醒，先请求通知权限
-                    if newValue != "off" {
-                        let granted = await NotificationService.shared.requestAuthorization()
-                        if granted {
-                            await NotificationService.shared.updateReminder(
-                                mode: newValue,
-                                hour: reminderHour,
-                                minute: reminderMinute,
-                                message: reminderMessage
-                            )
-                        }
-                    } else {
-                        NotificationService.shared.cancelAllReminders()
-                    }
-                }
-            }
-            .task {
-                // 启动时同步通知设置
-                if accountingReminder != "off" {
-                    await NotificationService.shared.updateReminder(
-                        mode: accountingReminder,
-                        hour: reminderHour,
-                        minute: reminderMinute,
-                        message: reminderMessage
-                    )
-                }
             }
         }
     }

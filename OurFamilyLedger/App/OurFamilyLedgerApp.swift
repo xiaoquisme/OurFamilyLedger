@@ -11,7 +11,8 @@ struct OurFamilyLedgerApp: App {
             Member.self,
             Category.self,
             Ledger.self,
-            RecurringTransaction.self
+            RecurringTransaction.self,
+            AccountingReminder.self
         ])
 
         // 明确禁用 CloudKit 同步，SwiftData 仅用于本地缓存

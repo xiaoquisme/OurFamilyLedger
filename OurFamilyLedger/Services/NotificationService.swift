@@ -144,4 +144,75 @@ class NotificationService {
             break
         }
     }
+
+    // MARK: - 多提醒支持
+
+    /// 为单个 AccountingReminder 设置通知
+    func scheduleReminder(_ reminder: AccountingReminder) async {
+        guard reminder.isEnabled else { return }
+
+        // 请求权限
+        let granted = await requestAuthorization()
+        guard granted else {
+            print("通知权限未授权")
+            return
+        }
+
+        // 创建通知内容
+        let content = UNMutableNotificationContent()
+        content.title = "记账提醒"
+        content.body = reminder.message
+        content.sound = .default
+
+        // 设置触发时间
+        var dateComponents = DateComponents()
+        dateComponents.hour = reminder.hour
+        dateComponents.minute = reminder.minute
+
+        if reminder.frequency == .monthly {
+            dateComponents.day = 1
+        }
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+
+        let request = UNNotificationRequest(
+            identifier: reminder.notificationIdentifier,
+            content: content,
+            trigger: trigger
+        )
+
+        do {
+            try await notificationCenter.add(request)
+            let freqDesc = reminder.frequency == .daily ? "每天" : "每月1日"
+            print("✅ 提醒已设置（\(freqDesc) \(reminder.timeString)）")
+        } catch {
+            print("设置提醒失败: \(error)")
+        }
+    }
+
+    /// 更新单个 AccountingReminder 的通知
+    func updateSingleReminder(_ reminder: AccountingReminder) async {
+        // 先取消旧的
+        cancelReminder(reminder)
+        // 重新设置
+        await scheduleReminder(reminder)
+    }
+
+    /// 取消单个 AccountingReminder 的通知
+    func cancelReminder(_ reminder: AccountingReminder) {
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: [reminder.notificationIdentifier])
+        print("❌ 提醒已取消（\(reminder.timeString)）")
+    }
+
+    /// 同步所有提醒（启动时调用）
+    func syncAllReminders(_ reminders: [AccountingReminder]) async {
+        // 先取消所有旧提醒
+        let identifiers = reminders.map { $0.notificationIdentifier }
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
+
+        // 重新设置所有启用的提醒
+        for reminder in reminders where reminder.isEnabled {
+            await scheduleReminder(reminder)
+        }
+    }
 }
