@@ -4,17 +4,11 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
-    @AppStorage("accountingReminder") private var accountingReminder = "off"
     @AppStorage("lastRecurringCheckDate") private var lastRecurringCheckDateString = ""
 
     @State private var selectedTab: Tab = .chat
     @State private var hasSynced = false
-    @State private var hasCheckedReminder = false
     @State private var hasCheckedRecurringThisSession = false
-
-    // 通用记账提醒
-    @State private var showingReminder = false
-    @State private var reminderMessage = ""
 
     // 定期交易提醒
     @State private var pendingRecurringTransactions: [RecurringTransaction] = []
@@ -79,17 +73,6 @@ struct ContentView: View {
 
             // 检查定期交易 (每天检查一次)
             checkRecurringTransactionsIfNeeded()
-
-            // 检查通用记账提醒
-            checkAccountingReminder()
-        }
-        .alert("记账提醒", isPresented: $showingReminder) {
-            Button("去记账") {
-                selectedTab = .chat
-            }
-            Button("稍后再说", role: .cancel) {}
-        } message: {
-            Text(reminderMessage)
         }
         .sheet(isPresented: $showingRecurringConfirmation) {
             RecurringTransactionConfirmationView(
@@ -202,22 +185,6 @@ struct ContentView: View {
 
         try? modelContext.save()
         showingRecurringConfirmation = false
-    }
-
-    // MARK: - 通用记账提醒检查
-
-    private func checkAccountingReminder() {
-        guard !hasCheckedReminder else { return }
-        hasCheckedReminder = true
-
-        guard accountingReminder != "off" else { return }
-
-        // 如果已经有定期交易弹窗，先不显示通用提醒
-        guard !showingRecurringConfirmation else { return }
-
-        // 直接显示记账提醒，不检查是否已记账
-        reminderMessage = "记账时间到了，赶紧记一笔吧！"
-        showingReminder = true
     }
 }
 
