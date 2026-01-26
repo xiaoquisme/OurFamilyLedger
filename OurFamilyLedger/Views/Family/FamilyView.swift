@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CloudKit
 
 struct FamilyView: View {
     @Environment(\.modelContext) private var modelContext
@@ -420,6 +421,16 @@ struct EditMemberView: View {
 
 struct ShareLedgerView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var sharingService = CloudKitSharingService()
+
+    @State private var isCreating = false
+    @State private var isJoining = false
+    @State private var errorMessage: String?
+    @State private var showingError = false
+    @State private var createdLedgerURL: URL?
+    @State private var showingShareSheet = false
+    @State private var availableFolders: [URL] = []
+    @State private var showingJoinSheet = false
 
     var body: some View {
         NavigationStack {
@@ -439,22 +450,64 @@ struct ShareLedgerView: View {
 
                 VStack(spacing: 12) {
                     Button {
-                        // TODO: 创建共享文件夹
+                        createSharedLedger()
                     } label: {
-                        Label("创建共享账本", systemImage: "folder.badge.plus")
-                            .frame(maxWidth: .infinity)
+                        if isCreating {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Label("创建共享账本", systemImage: "folder.badge.plus")
+                                .frame(maxWidth: .infinity)
+                        }
                     }
                     .buttonStyle(.borderedProminent)
+                    .disabled(isCreating)
 
                     Button {
-                        // TODO: 加入共享账本
+                        joinSharedLedger()
                     } label: {
-                        Label("加入已有账本", systemImage: "folder.badge.person.crop")
-                            .frame(maxWidth: .infinity)
+                        if isJoining {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Label("加入已有账本", systemImage: "folder.badge.person.crop")
+                                .frame(maxWidth: .infinity)
+                        }
                     }
                     .buttonStyle(.bordered)
+                    .disabled(isJoining)
                 }
                 .padding(.horizontal)
+
+                // 状态指示
+                switch sharingService.sharingStatus {
+                case .notShared:
+                    EmptyView()
+                case .pending:
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("正在准备共享...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                case .shared(let count):
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("已共享 (\(count) 人)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                case .error(let message):
+                    HStack {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundStyle(.red)
+                        Text(message)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
 
                 Spacer()
             }
@@ -468,8 +521,141 @@ struct ShareLedgerView: View {
                     }
                 }
             }
+            .alert("错误", isPresented: $showingError) {
+                Button("确定", role: .cancel) {}
+            } message: {
+                Text(errorMessage ?? "未知错误")
+            }
+            .sheet(isPresented: $showingShareSheet) {
+                if let url = createdLedgerURL {
+                    ShareSheetView(items: [url])
+                }
+            }
+            .sheet(isPresented: $showingJoinSheet) {
+                JoinLedgerView(folders: availableFolders, sharingService: sharingService) {
+                    dismiss()
+                }
+            }
         }
         .presentationDetents([.medium])
+    }
+
+    private func createSharedLedger() {
+        isCreating = true
+        Task {
+            do {
+                let name = "家庭账本_\(Date().formatted(.dateTime.month().day()))"
+                let ledgerURL = try await sharingService.createSharedLedger(name: name)
+                createdLedgerURL = ledgerURL
+                showingShareSheet = true
+            } catch {
+                errorMessage = error.localizedDescription
+                showingError = true
+            }
+            isCreating = false
+        }
+    }
+
+    private func joinSharedLedger() {
+        isJoining = true
+        Task {
+            do {
+                let folders = try await sharingService.getSharedLedgerFolders()
+                availableFolders = folders
+                if folders.isEmpty {
+                    // 没有可用的共享，提示用户
+                    errorMessage = "没有发现可加入的共享账本。请通过 Files 应用浏览 iCloud 中的共享文件夹。"
+                    showingError = true
+                } else {
+                    showingJoinSheet = true
+                }
+            } catch {
+                errorMessage = error.localizedDescription
+                showingError = true
+            }
+            isJoining = false
+        }
+    }
+}
+
+// MARK: - Share Sheet View
+
+struct ShareSheetView: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Join Ledger View
+
+struct JoinLedgerView: View {
+    let folders: [URL]
+    let sharingService: CloudKitSharingService
+    let onComplete: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedFolder: URL?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if folders.isEmpty {
+                    ContentUnavailableView(
+                        "没有可用的账本",
+                        systemImage: "folder.badge.questionmark",
+                        description: Text("请通过 Files 应用浏览 iCloud 中的共享文件夹")
+                    )
+                } else {
+                    ForEach(folders, id: \.absoluteString) { folder in
+                        Button {
+                            selectFolder(folder)
+                        } label: {
+                            HStack {
+                                Image(systemName: "folder.fill")
+                                    .foregroundStyle(.blue)
+                                VStack(alignment: .leading) {
+                                    Text(folder.lastPathComponent)
+                                        .font(.headline)
+                                    Text("iCloud 账本")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if selectedFolder == folder {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("选择账本")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("选择") {
+                        onComplete()
+                    }
+                    .disabled(selectedFolder == nil)
+                }
+            }
+        }
+    }
+
+    private func selectFolder(_ folder: URL) {
+        selectedFolder = folder
+        // 这里可以保存用户选择的账本路径到 UserDefaults 或其他存储
+        UserDefaults.standard.set(folder.path, forKey: "selectedLedgerPath")
     }
 }
 

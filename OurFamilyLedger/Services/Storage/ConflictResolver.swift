@@ -257,6 +257,14 @@ final class SyncManager: ObservableObject {
             let conflictFiles = try await conflictResolver.detectiCloudConflicts(at: ledgerURL)
 
             for conflictFile in conflictFiles {
+                // 只处理交易CSV文件
+                let filename = conflictFile.lastPathComponent
+                guard filename.hasPrefix("transactions_") && filename.hasSuffix(".csv") else {
+                    // 标记非交易文件的冲突为已解决（保留当前版本）
+                    try await conflictResolver.resolveFileConflict(at: conflictFile, keepingVersion: nil)
+                    continue
+                }
+
                 // 获取版本
                 let versions = await conflictResolver.getFileVersions(at: conflictFile)
 
@@ -264,14 +272,48 @@ final class SyncManager: ObservableObject {
                     continue
                 }
 
-                // 读取当前版本和冲突版本
+                // 读取当前版本
                 let currentData = try await cloudService.readFile(at: conflictFile)
                 guard let currentContent = String(data: currentData, encoding: .utf8) else {
                     continue
                 }
 
                 // 解析当前版本
-                // TODO: 实现具体的解析和合并逻辑
+                var mergedTransactions = try await csvService.parseTransactionsFromContent(currentContent)
+
+                // 遍历每个冲突版本并合并
+                for version in versions {
+                    do {
+                        let versionData = try Data(contentsOf: version.url)
+                        guard let versionContent = String(data: versionData, encoding: .utf8) else {
+                            continue
+                        }
+
+                        // 解析冲突版本
+                        let versionTransactions = try await csvService.parseTransactionsFromContent(versionContent)
+
+                        // 使用 ConflictResolver 进行合并
+                        let result = await conflictResolver.merge(
+                            local: mergedTransactions,
+                            remote: versionTransactions,
+                            strategy: .keepNewest
+                        )
+
+                        // 更新合并结果
+                        mergedTransactions = result.mergedTransactions
+
+                        // 记录冲突
+                        if !result.conflicts.isEmpty {
+                            pendingConflicts.append(contentsOf: result.conflicts)
+                        }
+                    } catch {
+                        // 跳过无法读取的版本
+                        continue
+                    }
+                }
+
+                // 将合并结果写回文件
+                try await csvService.writeTransactions(mergedTransactions, to: conflictFile)
 
                 // 标记冲突为已解决
                 try await conflictResolver.resolveFileConflict(at: conflictFile, keepingVersion: nil)
@@ -311,8 +353,48 @@ final class SyncManager: ObservableObject {
 
     @objc private func queryDidUpdate(_ notification: Notification) {
         // 处理文件变化通知
-        Task {
-            // TODO: 实现增量同步
+        Task { @MainActor in
+            guard let query = notification.object as? NSMetadataQuery else { return }
+
+            // 禁用查询更新以处理当前结果
+            query.disableUpdates()
+            defer { query.enableUpdates() }
+
+            // 获取变化的文件
+            guard let changedItems = notification.userInfo?[NSMetadataQueryUpdateChangedItemsKey] as? [NSMetadataItem] else {
+                return
+            }
+
+            for item in changedItems {
+                guard let fileURL = item.value(forAttribute: NSMetadataItemURLKey) as? URL else {
+                    continue
+                }
+
+                // 只处理交易 CSV 文件
+                let filename = fileURL.lastPathComponent
+                guard filename.hasPrefix("transactions_") && filename.hasSuffix(".csv") else {
+                    continue
+                }
+
+                // 检查文件是否需要下载
+                let downloadStatus = item.value(forAttribute: NSMetadataUbiquitousItemDownloadingStatusKey) as? String
+                if downloadStatus != NSMetadataUbiquitousItemDownloadingStatusCurrent {
+                    // 触发下载
+                    do {
+                        try await cloudService.downloadFileIfNeeded(at: fileURL)
+                    } catch {
+                        continue
+                    }
+                }
+
+                // 检查是否有冲突
+                let hasConflict = item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? Bool ?? false
+                if hasConflict {
+                    // 触发完整同步来处理冲突
+                    await sync(ledgerURL: fileURL.deletingLastPathComponent())
+                    break // 同步会处理所有冲突文件
+                }
+            }
         }
     }
 }

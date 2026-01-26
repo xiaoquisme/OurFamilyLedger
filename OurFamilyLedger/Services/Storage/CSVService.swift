@@ -101,6 +101,11 @@ actor CSVService {
         return try parseTransactionsCSV(content)
     }
 
+    /// 从内容字符串解析交易记录（用于冲突解决）
+    func parseTransactionsFromContent(_ content: String) throws -> [TransactionCSV] {
+        return try parseTransactionsCSV(content)
+    }
+
     /// 写入交易记录
     func writeTransactions(_ transactions: [TransactionCSV], to fileURL: URL) throws {
         let content = generateTransactionsCSV(transactions)

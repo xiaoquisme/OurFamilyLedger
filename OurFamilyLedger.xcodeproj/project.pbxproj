@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		ACCR1A2B3C4D5E6F7G8H9I0J2 /* AccountingReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */; };
-		REML1A2B3C4D5E6F7G8H9I0J2 /* RemindersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */; };
 		09F52E5FFAC78D6299A200CC /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEA8DFFF81AB02CC23A80B3 /* Category.swift */; };
 		0F437A2CE324B3E0CD2F8E2A /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A3B065E6F41F42FB3667C0 /* Member.swift */; };
 		120A336CD0F03FA3EB70C11E /* ConflictResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62435557595A07F0B1D9C97A /* ConflictResolver.swift */; };
@@ -25,6 +23,7 @@
 		9A6D878F6CD6F38C66504555 /* CSVService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8EA8555B85CFD2DAAFC15A /* CSVService.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* Assets.xcassets */; };
 		A67FB67A392B10B47F4087C0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5671FE09D455999353EF21FB /* SettingsView.swift */; };
+		ACCR1A2B3C4D5E6F7G8H9I0J2 /* AccountingReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */; };
 		C1DBE28BDD119646E98B5720 /* TransactionListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9824F78774BD96B8A27C698B /* TransactionListViewModel.swift */; };
 		C42DA32222202D4D3DF3145C /* AppleOCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680C6891D961F448599ADE8E /* AppleOCRService.swift */; };
 		CC170286CC785518D5483E3B /* TransactionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C72F539C7416BF4EBF91E6 /* TransactionListView.swift */; };
@@ -36,8 +35,10 @@
 		NOTF1A2B3C4D5E6F7G8H9I0J2 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = NOTF1A2B3C4D5E6F7G8H9I0J1 /* NotificationService.swift */; };
 		REC1A2B3C4D5E6F7G8H9I0J2 /* RecurringTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = REC1A2B3C4D5E6F7G8H9I0J1 /* RecurringTransaction.swift */; };
 		RECV1A2B3C4D5E6F7G8H9I0J4 /* RecurringTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RECV1A2B3C4D5E6F7G8H9I0J3 /* RecurringTransactionView.swift */; };
+		REML1A2B3C4D5E6F7G8H9I0J2 /* RemindersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */; };
 		SYNC5E7V1CE5A7B8C9D0E1F2 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */; };
 		TXND1A2B3C4D5E6F7G8H9I0J2 /* TransactionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */; };
+		CKSH1A2B3C4D5E6F7G8H9I0J2 /* CloudKitSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CKSH1A2B3C4D5E6F7G8H9I0J1 /* CloudKitSharingService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +59,7 @@
 		94CC2A3552F3BD5E74B2A7F4 /* ReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsView.swift; sourceTree = "<group>"; };
 		9824F78774BD96B8A27C698B /* TransactionListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionListViewModel.swift; sourceTree = "<group>"; };
 		9EF32BB214A29A00AB0244B2 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
+		ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountingReminder.swift; sourceTree = "<group>"; };
 		B4AAB69C8D226513FEB6A374 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C50799470FEDAF8CE0FCAA7D /* FamilyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyView.swift; sourceTree = "<group>"; };
 		C9C6AAF0DDC20C58E5EF47FE /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -71,10 +73,10 @@
 		NOTF1A2B3C4D5E6F7G8H9I0J1 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		REC1A2B3C4D5E6F7G8H9I0J1 /* RecurringTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringTransaction.swift; sourceTree = "<group>"; };
 		RECV1A2B3C4D5E6F7G8H9I0J3 /* RecurringTransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringTransactionView.swift; sourceTree = "<group>"; };
-		SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
-		TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionDetailView.swift; sourceTree = "<group>"; };
-		ACCR1A2B3C4D5E6F7G8H9I0J1 /* AccountingReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountingReminder.swift; sourceTree = "<group>"; };
 		REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersListView.swift; sourceTree = "<group>"; };
+		SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
+		CKSH1A2B3C4D5E6F7G8H9I0J1 /* CloudKitSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSharingService.swift; sourceTree = "<group>"; };
+		TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -249,6 +251,7 @@
 				FA8EA8555B85CFD2DAAFC15A /* CSVService.swift */,
 				40533553D724F5F8A5197DCD /* iCloudService.swift */,
 				SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */,
+				CKSH1A2B3C4D5E6F7G8H9I0J1 /* CloudKitSharingService.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -352,6 +355,7 @@
 				TXND1A2B3C4D5E6F7G8H9I0J2 /* TransactionDetailView.swift in Sources */,
 				C1DBE28BDD119646E98B5720 /* TransactionListViewModel.swift in Sources */,
 				626B1B9C6AC87A2231D7EEDC /* iCloudService.swift in Sources */,
+				CKSH1A2B3C4D5E6F7G8H9I0J2 /* CloudKitSharingService.swift in Sources */,
 				REC1A2B3C4D5E6F7G8H9I0J2 /* RecurringTransaction.swift in Sources */,
 				RECV1A2B3C4D5E6F7G8H9I0J4 /* RecurringTransactionView.swift in Sources */,
 				ACCR1A2B3C4D5E6F7G8H9I0J2 /* AccountingReminder.swift in Sources */,
@@ -434,7 +438,7 @@
 				CODE_SIGN_ENTITLEMENTS = OurFamilyLedger/OurFamilyLedger.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = 9Z52FQXV2R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OurFamilyLedger/Info.plist;
@@ -523,7 +527,7 @@
 				CODE_SIGN_ENTITLEMENTS = OurFamilyLedger/OurFamilyLedger.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = 9Z52FQXV2R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OurFamilyLedger/Info.plist;

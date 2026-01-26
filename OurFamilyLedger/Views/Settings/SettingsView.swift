@@ -658,19 +658,103 @@ struct AddCategoryView: View {
 
     @State private var name = ""
     @State private var icon = "tag"
+    @State private var color = "blue"
     @State private var type: TransactionType = .expense
+
+    // Available icons for category selection
+    private let categoryIcons: [String] = [
+        // Common
+        "tag", "folder", "star", "heart", "cart", "creditcard",
+        // Food
+        "fork.knife", "carrot", "leaf", "birthday.cake", "wineglass",
+        // Transport
+        "car", "bus", "bicycle", "airplane", "tram",
+        // Home
+        "house", "sofa", "bed.double", "washer", "lightbulb",
+        // Finance
+        "yensign.circle", "dollarsign.square", "chart.line.uptrend.xyaxis", "banknote",
+        // People & Social
+        "person", "person.2", "figure.walk", "figure.2.and.child.holdinghands", "gift",
+        // Shopping & Daily
+        "bag", "basket", "toilet.fill", "tshirt", "paintbrush",
+        // Tech & Entertainment
+        "phone", "cable.connector", "music.mic", "gamecontroller", "book",
+        // Health & Wellness
+        "cross.case", "heart.circle", "pawprint", "graduationcap", "briefcase"
+    ]
+
+    // Available colors for category
+    private let categoryColors: [(name: String, color: Color)] = [
+        ("blue", .blue),
+        ("green", .green),
+        ("orange", .orange),
+        ("purple", .purple),
+        ("pink", .pink),
+        ("red", .red),
+        ("yellow", .yellow),
+        ("teal", .teal),
+        ("gray", .gray),
+        ("brown", .brown),
+        ("cyan", .cyan),
+        ("indigo", .indigo)
+    ]
 
     var body: some View {
         NavigationStack {
             Form {
-                TextField("分类名称", text: $name)
+                Section {
+                    TextField("分类名称", text: $name)
 
-                Picker("类型", selection: $type) {
-                    Text("支出").tag(TransactionType.expense)
-                    Text("收入").tag(TransactionType.income)
+                    Picker("类型", selection: $type) {
+                        Text("支出").tag(TransactionType.expense)
+                        Text("收入").tag(TransactionType.income)
+                    }
                 }
 
-                // TODO: 图标选择器
+                Section("图标") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
+                        ForEach(categoryIcons, id: \.self) { iconName in
+                            Circle()
+                                .fill(selectedColor.opacity(icon == iconName ? 0.3 : 0.1))
+                                .frame(width: 44, height: 44)
+                                .overlay {
+                                    Image(systemName: iconName)
+                                        .font(.system(size: 18))
+                                        .foregroundStyle(icon == iconName ? selectedColor : .secondary)
+                                }
+                                .overlay {
+                                    if icon == iconName {
+                                        Circle()
+                                            .stroke(selectedColor, lineWidth: 2)
+                                    }
+                                }
+                                .onTapGesture {
+                                    icon = iconName
+                                }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section("颜色") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
+                        ForEach(categoryColors, id: \.name) { colorItem in
+                            Circle()
+                                .fill(colorItem.color.opacity(0.3))
+                                .frame(width: 44, height: 44)
+                                .overlay {
+                                    if color == colorItem.name {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(colorItem.color)
+                                    }
+                                }
+                                .onTapGesture {
+                                    color = colorItem.name
+                                }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
             }
             .navigationTitle("添加分类")
             .navigationBarTitleDisplayMode(.inline)
@@ -688,10 +772,15 @@ struct AddCategoryView: View {
         }
     }
 
+    private var selectedColor: Color {
+        categoryColors.first { $0.name == color }?.color ?? .blue
+    }
+
     private func addCategory() {
         let category = Category(
             name: name,
             icon: icon,
+            color: color,
             type: type
         )
         modelContext.insert(category)
