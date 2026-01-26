@@ -22,9 +22,19 @@ enum KeychainError: LocalizedError {
     }
 }
 
+/// Keychain 服务协议
+protocol KeychainServiceProtocol {
+    func saveAPIKey(_ key: String, for provider: AIProvider) throws
+    func getAPIKey(for provider: AIProvider) throws -> String?
+    func deleteAPIKey(for provider: AIProvider) throws
+    func saveCustomEndpoint(_ endpoint: String) throws
+    func getCustomEndpoint() throws -> String?
+    func clearAll() throws
+}
+
 /// Keychain 服务
-final class KeychainService {
-    static let shared = KeychainService()
+final class KeychainService: KeychainServiceProtocol {
+    static var shared: KeychainServiceProtocol = KeychainService()
 
     private let service = "com.ourfamilyledger.app"
 

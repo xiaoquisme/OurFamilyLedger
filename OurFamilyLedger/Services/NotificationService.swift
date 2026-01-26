@@ -1,9 +1,20 @@
 import Foundation
 import UserNotifications
 
+/// 通知服务协议
+protocol NotificationServiceProtocol {
+    func requestAuthorization() async -> Bool
+    func checkAuthorizationStatus() async -> UNAuthorizationStatus
+    func scheduleReminder(_ reminder: AccountingReminder) async
+    func updateSingleReminder(_ reminder: AccountingReminder) async
+    func cancelReminder(_ reminder: AccountingReminder)
+    func syncAllReminders(_ reminders: [AccountingReminder]) async
+    func cancelAllReminders()
+}
+
 /// 本地通知服务
-class NotificationService {
-    static let shared = NotificationService()
+class NotificationService: NotificationServiceProtocol {
+    static var shared: NotificationServiceProtocol = NotificationService()
 
     private let notificationCenter = UNUserNotificationCenter.current()
     private let dailyReminderIdentifier = "daily_accounting_reminder"

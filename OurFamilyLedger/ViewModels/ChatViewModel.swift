@@ -13,7 +13,18 @@ final class ChatViewModel: ObservableObject {
 
     private var modelContext: ModelContext?
     private var aiService: AIServiceProtocol?
-    private let ocrService = AppleOCRService()
+    private let ocrService: OCRServiceProtocol
+    private let keychainService: KeychainServiceProtocol
+
+    // MARK: - Initialization
+
+    init(
+        ocrService: OCRServiceProtocol = AppleOCRService(),
+        keychainService: KeychainServiceProtocol = KeychainService.shared
+    ) {
+        self.ocrService = ocrService
+        self.keychainService = keychainService
+    }
 
     // 重试相关
     private var lastInputText: String = ""
@@ -33,8 +44,8 @@ final class ChatViewModel: ObservableObject {
         let provider = AIProvider(rawValue: UserDefaults.standard.string(forKey: "aiProvider") ?? "openai") ?? .openai
         let model = UserDefaults.standard.string(forKey: "aiModel")
 
-        if let apiKey = try? KeychainService.shared.getAPIKey(for: provider), !apiKey.isEmpty {
-            let endpoint = try? KeychainService.shared.getCustomEndpoint()
+        if let apiKey = try? keychainService.getAPIKey(for: provider), !apiKey.isEmpty {
+            let endpoint = try? keychainService.getCustomEndpoint()
             aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint, model: model)
         }
     }

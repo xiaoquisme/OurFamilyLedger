@@ -49,6 +49,9 @@ struct OurFamilyLedgerApp: App {
 
         // 初始化默认分类
         initializeDefaultCategories()
+
+        // 初始化默认提醒
+        initializeDefaultReminders()
     }
 
     private static func deleteSwiftDataStore() {
@@ -93,5 +96,37 @@ struct OurFamilyLedgerApp: App {
         }
 
         try? context.save()
+    }
+
+    private func initializeDefaultReminders() {
+        let context = modelContainer.mainContext
+
+        // 检查是否已有提醒
+        let descriptor = FetchDescriptor<AccountingReminder>()
+        let existingCount = (try? context.fetchCount(descriptor)) ?? 0
+
+        guard existingCount == 0 else { return }
+
+        // 添加默认提醒：10:00, 14:00, 20:00
+        let defaultTimes = [(10, 0), (14, 0), (20, 0)]
+
+        for (hour, minute) in defaultTimes {
+            let reminder = AccountingReminder(
+                hour: hour,
+                minute: minute,
+                message: "记账时间到了，赶紧记一笔吧！",
+                frequency: .daily,
+                isEnabled: true
+            )
+            context.insert(reminder)
+        }
+
+        try? context.save()
+
+        // 设置系统通知
+        Task {
+            let reminders = (try? context.fetch(descriptor)) ?? []
+            await NotificationService.shared.syncAllReminders(reminders)
+        }
     }
 }
