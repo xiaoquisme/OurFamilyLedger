@@ -209,7 +209,7 @@ struct SettingsView: View {
                     HStack {
                         Text("版本")
                         Spacer()
-                        Text("1.0.0")
+                        Text(Bundle.main.fullVersionString)
                             .foregroundStyle(.secondary)
                     }
 

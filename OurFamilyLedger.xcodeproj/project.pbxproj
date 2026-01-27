@@ -39,6 +39,7 @@
 		REML1A2B3C4D5E6F7G8H9I0J2 /* RemindersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */; };
 		SYNC5E7V1CE5A7B8C9D0E1F2 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */; };
 		TXND1A2B3C4D5E6F7G8H9I0J2 /* TransactionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */; };
+		BUND1A2B3C4D5E6F7G8H9I0J2 /* Bundle+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BUND1A2B3C4D5E6F7G8H9I0J1 /* Bundle+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +97,7 @@
 		REML1A2B3C4D5E6F7G8H9I0J1 /* RemindersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersListView.swift; sourceTree = "<group>"; };
 		SYNC4E7V1CE5A7B8C9D0E1F3 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		TXND1A2B3C4D5E6F7G8H9I0J1 /* TransactionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionDetailView.swift; sourceTree = "<group>"; };
+		BUND1A2B3C4D5E6F7G8H9I0J1 /* Bundle+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -304,6 +306,7 @@
 		D4AC96643E38AA755200CEE1 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				BUND1A2B3C4D5E6F7G8H9I0J1 /* Bundle+Extensions.swift */,
 				9EF32BB214A29A00AB0244B2 /* Date+Extensions.swift */,
 				62375C7B4254F259549AEB4F /* Decimal+Extensions.swift */,
 			);
@@ -471,6 +474,7 @@
 				120A336CD0F03FA3EB70C11E /* ConflictResolver.swift in Sources */,
 				631B24939939C46CA5310D4E /* ContentView.swift in Sources */,
 				38DC43434EC7152EA8EE9BB1 /* Date+Extensions.swift in Sources */,
+				BUND1A2B3C4D5E6F7G8H9I0J2 /* Bundle+Extensions.swift in Sources */,
 				80138A787E982C72B613B4A5 /* Decimal+Extensions.swift in Sources */,
 				21CE03AD907F225B2B3EAA4E /* FamilyView.swift in Sources */,
 				862726239247799E5938D984 /* KeychainService.swift in Sources */,
