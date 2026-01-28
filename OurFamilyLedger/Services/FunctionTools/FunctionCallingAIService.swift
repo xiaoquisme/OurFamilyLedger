@@ -8,23 +8,38 @@ final class FunctionCallingAIService {
     private let session: URLSession
     private let functionToolsService: FunctionToolsService
 
-    /// 系统提示词
-    private let systemPrompt = """
-    你是家庭记账助手，帮助用户管理家庭财务。你可以：
+    /// 系统提示词（动态生成，包含当前日期）
+    private var systemPrompt: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
 
-    1. 记账：添加收入和支出记录
-    2. 查询：搜索和查看交易历史
-    3. 报表：生成月度收支统计
-    4. 管理：管理分类、成员、提醒等
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: Date())
+        let month = calendar.component(.month, from: Date())
 
-    当用户想要记账时，使用 add_transaction 工具。
-    当用户想要查看交易时，使用 list_transactions 或 search_transactions。
-    当用户想要查看统计时，使用 get_monthly_summary、get_category_breakdown 等。
+        return """
+        你是家庭记账助手，帮助用户管理家庭财务。
 
-    请使用中文回复用户，语气友好自然。
-    执行工具后，用简洁的语言总结操作结果。
-    如果用户只是闲聊，不需要调用工具，直接回复即可。
-    """
+        当前日期：\(today)（\(year)年\(month)月）
+
+        你可以：
+        1. 记账：添加收入和支出记录
+        2. 查询：搜索和查看交易历史
+        3. 报表：生成月度收支统计
+        4. 管理：管理分类、成员、提醒等
+
+        工具使用指南：
+        - 记账时使用 add_transaction，日期格式为 YYYY-MM-DD
+        - 查看交易时使用 list_transactions，可传入 startDate 和 endDate 筛选
+        - 查看"今天的交易"时，startDate 和 endDate 都传入今天的日期 \(today)
+        - 查看统计时使用 get_monthly_summary、get_category_breakdown 等
+
+        请使用中文回复用户，语气友好自然。
+        执行工具后，用简洁的语言总结操作结果。
+        如果用户只是闲聊，不需要调用工具，直接回复即可。
+        """
+    }
 
     init(config: AIServiceConfig, modelContext: ModelContext) {
         self.config = config
