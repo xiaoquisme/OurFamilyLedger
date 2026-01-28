@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D0628BD9B6814BE7B1856A93 /* FunctionToolDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F441AA1CCA214DA3AFA7F41E /* FunctionToolDefinitions.swift */; };
+		9220E523557B4A87A1AE179E /* FunctionToolsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61518089AF6F418397BCA4E9 /* FunctionToolsService.swift */; };
+		3AFA157D5C5E4D278F443689 /* FunctionCallingAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD8B52580AB24D85AB11215E /* FunctionCallingAIService.swift */; };
+		D18BD4AF159441A4B009ED9B /* AssistantChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D8E3A94E5C4993A87DB12A /* AssistantChatViewModel.swift */; };
+		417BD4E832B64CD2A1C3B8F9 /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99518572F5640FF834924D3 /* AssistantChatView.swift */; };
 		09F52E5FFAC78D6299A200CC /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEA8DFFF81AB02CC23A80B3 /* Category.swift */; };
 		0F437A2CE324B3E0CD2F8E2A /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A3B065E6F41F42FB3667C0 /* Member.swift */; };
 		120A336CD0F03FA3EB70C11E /* ConflictResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62435557595A07F0B1D9C97A /* ConflictResolver.swift */; };
@@ -60,6 +65,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F441AA1CCA214DA3AFA7F41E /* FunctionToolDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionToolDefinitions.swift; sourceTree = "<group>"; };
+		61518089AF6F418397BCA4E9 /* FunctionToolsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionToolsService.swift; sourceTree = "<group>"; };
+		DD8B52580AB24D85AB11215E /* FunctionCallingAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionCallingAIService.swift; sourceTree = "<group>"; };
+		E4D8E3A94E5C4993A87DB12A /* AssistantChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatViewModel.swift; sourceTree = "<group>"; };
+		D99518572F5640FF834924D3 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
 		0A172D6D47328DEFDA1C7167 /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
 		10C72F539C7416BF4EBF91E6 /* TransactionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionListView.swift; sourceTree = "<group>"; };
 		161B7E39CF0AB823C1D25C72 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
@@ -123,6 +133,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		83D4A89708244F309FEC45B4 /* FunctionTools */ = {
+			isa = PBXGroup;
+			children = (
+				F441AA1CCA214DA3AFA7F41E /* FunctionToolDefinitions.swift */, 61518089AF6F418397BCA4E9 /* FunctionToolsService.swift */, DD8B52580AB24D85AB11215E /* FunctionCallingAIService.swift */
+			);
+			path = FunctionTools;
+			sourceTree = "<group>";
+		};
 		09AD910B062E58CA527969B8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -218,6 +236,7 @@
 		4D523F48B0EA563273E40540 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				83D4A89708244F309FEC45B4 /* FunctionTools */,
 				FB3BAD3832D7A9AC397D8913 /* KeychainService.swift */,
 				NOTF1A2B3C4D5E6F7G8H9I0J1 /* NotificationService.swift */,
 				247E38C35F09AEF468B8134A /* AI */,
@@ -240,6 +259,7 @@
 		5141467C0E0F989A295100FC /* Chat */ = {
 			isa = PBXGroup;
 			children = (
+				D99518572F5640FF834924D3 /* AssistantChatView.swift */,
 				C9C6AAF0DDC20C58E5EF47FE /* ChatView.swift */,
 			);
 			path = Chat;
@@ -256,6 +276,7 @@
 		AB9D9BE2F3DAAEE3DC5FD233 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				E4D8E3A94E5C4993A87DB12A /* AssistantChatViewModel.swift */,
 				161B7E39CF0AB823C1D25C72 /* ChatViewModel.swift */,
 				9824F78774BD96B8A27C698B /* TransactionListViewModel.swift */,
 			);
@@ -464,6 +485,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0628BD9B6814BE7B1856A93 /* FunctionToolDefinitions.swift in Sources */,
+				9220E523557B4A87A1AE179E /* FunctionToolsService.swift in Sources */,
+				3AFA157D5C5E4D278F443689 /* FunctionCallingAIService.swift in Sources */,
+				D18BD4AF159441A4B009ED9B /* AssistantChatViewModel.swift in Sources */,
+				417BD4E832B64CD2A1C3B8F9 /* AssistantChatView.swift in Sources */,
 				F9A0F282FAA086F93A4B96C4 /* AIServiceProtocol.swift in Sources */,
 				C42DA32222202D4D3DF3145C /* AppleOCRService.swift in Sources */,
 				9A6D878F6CD6F38C66504555 /* CSVService.swift in Sources */,

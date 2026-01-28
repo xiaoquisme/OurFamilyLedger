@@ -16,6 +16,7 @@ struct ContentView: View {
 
     enum Tab: String, CaseIterable {
         case chat = "记账"
+        case assistant = "助手"
         case transactions = "明细"
         case reports = "报表"
         case family = "家庭"
@@ -24,6 +25,7 @@ struct ContentView: View {
         var icon: String {
             switch self {
             case .chat: return "bubble.left.and.text.bubble.right"
+            case .assistant: return "sparkles"
             case .transactions: return "list.bullet.rectangle"
             case .reports: return "chart.pie"
             case .family: return "person.3"
@@ -39,6 +41,12 @@ struct ContentView: View {
                     Label(Tab.chat.rawValue, systemImage: Tab.chat.icon)
                 }
                 .tag(Tab.chat)
+
+            AssistantChatView()
+                .tabItem {
+                    Label(Tab.assistant.rawValue, systemImage: Tab.assistant.icon)
+                }
+                .tag(Tab.assistant)
 
             TransactionListView()
                 .tabItem {
