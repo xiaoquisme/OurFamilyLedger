@@ -226,7 +226,9 @@ extension FunctionToolsService {
 
         if let endDateStr = args["endDate"] as? String,
            let endDate = parseDate(endDateStr) {
-            transactions = transactions.filter { $0.date <= endDate }
+            // endDate 需要包含当天的所有时间，所以使用次日 00:00:00 作为上限
+            let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: endDate) ?? endDate
+            transactions = transactions.filter { $0.date < endOfDay }
         }
 
         if let typeStr = args["type"] as? String {
