@@ -80,13 +80,18 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>app-store-connect</string>
+              <string>app-store</string>
               <key>teamID</key>
               <string>${{ secrets.TEAM_ID }}</string>
               <key>uploadSymbols</key>
               <true/>
-              <key>destination</key>
-              <string>upload</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.xiaoquisme.ourfamilyledger</key>
+                  <string>${{ secrets.PROVISIONING_PROFILE_NAME }}</string>
+              </dict>
           </dict>
           </plist>
           EOF
