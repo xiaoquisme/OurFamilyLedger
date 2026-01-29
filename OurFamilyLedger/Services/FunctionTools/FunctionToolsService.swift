@@ -924,6 +924,7 @@ extension FunctionToolsService {
         case "daily": frequency = .daily
         case "weekly": frequency = .weekly
         case "monthly": frequency = .monthly
+        case "yearly": frequency = .yearly
         default: frequency = .monthly
         }
 
@@ -944,8 +945,12 @@ extension FunctionToolsService {
             payerId: payerId,
             merchant: args["merchant"] as? String ?? "",
             frequency: frequency,
+            interval: args["interval"] as? Int ?? 1,
             weekday: args["weekday"] as? Int,
-            dayOfMonth: args["dayOfMonth"] as? Int
+            weekdays: args["weekdays"] as? [Int] ?? [],
+            dayOfMonth: args["dayOfMonth"] as? Int,
+            monthOfYear: args["monthOfYear"] as? Int,
+            autoAdd: args["autoAdd"] as? Bool ?? false
         )
 
         modelContext.insert(recurring)
