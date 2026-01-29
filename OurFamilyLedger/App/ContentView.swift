@@ -158,9 +158,20 @@ struct ContentView: View {
             #endif
 
             // 找出今天应该执行的定期交易
-            pendingRecurringTransactions = allRecurring.filter { $0.shouldExecuteToday() }
+            let shouldExecute = allRecurring.filter { $0.shouldExecuteToday() }
 
-            if !pendingRecurringTransactions.isEmpty {
+            // 分为自动添加和手动确认两类
+            let autoAddTransactions = shouldExecute.filter { $0.autoAdd }
+            let manualConfirmTransactions = shouldExecute.filter { !$0.autoAdd }
+
+            // 自动添加的直接创建交易
+            if !autoAddTransactions.isEmpty {
+                confirmRecurringTransactions(autoAddTransactions)
+            }
+
+            // 手动确认的显示弹窗
+            if !manualConfirmTransactions.isEmpty {
+                pendingRecurringTransactions = manualConfirmTransactions
                 showingRecurringConfirmation = true
             }
         } catch {
@@ -187,8 +198,9 @@ struct ContentView: View {
 
             modelContext.insert(transaction)
 
-            // 更新上次执行日期
+            // 更新上次执行日期和执行次数
             recurring.lastExecutedDate = today
+            recurring.executedCount += 1
         }
 
         try? modelContext.save()
