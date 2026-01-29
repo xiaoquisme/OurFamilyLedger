@@ -20,8 +20,8 @@ jobs:
 
       - name: Install iOS Simulator Runtime
         run: |
-          # Install the iOS simulator runtime to fix asset catalog compilation
-          xcodebuild -downloadPlatform iOS
+          # Install iOS 18.2 simulator runtime matching Xcode 16.2
+          sudo xcrun simctl runtime add 'https://download.apple.com/Developer_Tools/iOS_18.2_Simulator_Runtime/iOS_18.2_Simulator_Runtime.dmg' || true
 
       - name: Install Apple certificate and provisioning profile
         env:
