@@ -69,11 +69,11 @@ jobs:
             -archivePath $RUNNER_TEMP/OurFamilyLedger.xcarchive \
             -sdk iphoneos \
             -configuration Release \
-            -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            ENABLE_PREVIEWS=NO
 
       - name: Export IPA
         run: |
