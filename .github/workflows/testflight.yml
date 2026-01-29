@@ -17,8 +17,8 @@ jobs:
 
       - name: Select Xcode version
         run: |
-          # Use Xcode 16.1 which matches the iOS 18.1 simulator runtime on the runner
-          sudo xcode-select -s /Applications/Xcode_16.1.app
+          # Use Xcode 16.0 which matches the iOS 18.0 simulator runtime (23B86) on the runner
+          sudo xcode-select -s /Applications/Xcode_16.0.app
 
       - name: Install Apple certificate and provisioning profile
         env:
