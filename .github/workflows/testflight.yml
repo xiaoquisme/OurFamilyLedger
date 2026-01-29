@@ -52,7 +52,9 @@ jobs:
         run: |
           # Use run number as build number for uniqueness
           BUILD_NUMBER=${{ github.run_number }}
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" OurFamilyLedger/Info.plist
+          # Use agvtool to set build number (works with CURRENT_PROJECT_VERSION in project.pbxproj)
+          cd OurFamilyLedger.xcodeproj/..
+          agvtool new-version -all $BUILD_NUMBER
           echo "Build number set to: $BUILD_NUMBER"
 
       - name: Build archive
