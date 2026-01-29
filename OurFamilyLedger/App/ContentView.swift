@@ -330,7 +330,7 @@ struct RecurringConfirmationRow: View {
                         .foregroundStyle(.primary)
 
                     HStack(spacing: 8) {
-                        Text(transaction.frequency.displayName)
+                        Text(transaction.recurrenceDescription)
                             .font(.caption)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
