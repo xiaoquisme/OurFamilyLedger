@@ -73,7 +73,13 @@ jobs:
             ENABLE_PREVIEWS=NO
 
       - name: Export IPA
+        env:
+          PROVISIONING_PROFILE_NAME: ${{ secrets.PROVISIONING_PROFILE_NAME }}
         run: |
+          # Get the UUID of the installed provisioning profile
+          PROFILE_UUID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | plutil -extract UUID raw - 2>/dev/null || echo "")
+          echo "Profile UUID: $PROFILE_UUID"
+
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -90,16 +96,19 @@ jobs:
               <key>provisioningProfiles</key>
               <dict>
                   <key>com.xiaoquisme.ourfamilyledger</key>
-                  <string>${{ secrets.PROVISIONING_PROFILE_NAME }}</string>
+                  <string>$PROFILE_UUID</string>
               </dict>
           </dict>
           </plist>
           EOF
 
+          cat $RUNNER_TEMP/ExportOptions.plist
+
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/OurFamilyLedger.xcarchive \
             -exportPath $RUNNER_TEMP/export \
-            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+            -allowProvisioningUpdates
 
       - name: Upload to TestFlight
         env:
