@@ -114,18 +114,14 @@ struct ChatView: View {
                 }
                 Button("取消", role: .cancel) {}
             } message: { drafts in
-                if drafts.isEmpty {
-                    Text("没有待确认的交易")
-                } else {
-                    let summary = drafts.map { draft in
-                        "• \(draft.categoryName): ¥\(NSDecimalNumber(decimal: draft.amount).doubleValue)"
-                    }.joined(separator: "\n")
-                    
-                    let total = drafts.reduce(Decimal.zero) { $0 + $1.amount }
-                    let totalText = "\n\n总计: ¥\(NSDecimalNumber(decimal: total).doubleValue)"
-                    
-                    Text(summary + totalText)
-                }
+                let summary = drafts.map { draft in
+                    "• \(draft.categoryName): \(draft.amount.formatted(currency: "CNY"))"
+                }.joined(separator: "\n")
+                
+                let total = drafts.reduce(Decimal.zero) { $0 + $1.amount }
+                let totalText = "\n\n总计: \(total.formatted(currency: "CNY"))"
+                
+                Text(summary + totalText)
             }
         }
     }
