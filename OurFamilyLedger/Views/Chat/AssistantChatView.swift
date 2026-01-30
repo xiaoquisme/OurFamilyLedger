@@ -26,6 +26,10 @@ struct AssistantChatView: View {
                         }
                         .padding()
                     }
+                    .scrollDismissesKeyboard(.interactively)
+                    .onTapGesture {
+                        isInputFocused = false
+                    }
                     .onChange(of: viewModel.messages.count) { _, _ in
                         scrollToBottom(proxy: proxy)
                     }
