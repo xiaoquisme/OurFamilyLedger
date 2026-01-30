@@ -95,7 +95,7 @@ jobs:
               <string>manual</string>
               <key>provisioningProfiles</key>
               <dict>
-                  <key>com.xiaoquisme.ourfamilyledger</key>
+                  <key>com.xiaoquisme.ourfamilyledgers</key>
                   <string>$PROFILE_UUID</string>
               </dict>
           </dict>
