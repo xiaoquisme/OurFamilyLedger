@@ -47,18 +47,14 @@ Button("全部确认") {
     }
     Button("取消", role: .cancel) {}
 } message: { drafts in
-    if drafts.isEmpty {
-        Text("没有待确认的交易")
-    } else {
-        let summary = drafts.map { draft in
-            "• \(draft.categoryName): ¥\(NSDecimalNumber(decimal: draft.amount).doubleValue)"
-        }.joined(separator: "\n")
-        
-        let total = drafts.reduce(Decimal.zero) { $0 + $1.amount }
-        let totalText = "\n\n总计: ¥\(NSDecimalNumber(decimal: total).doubleValue)"
-        
-        Text(summary + totalText)
-    }
+    let summary = drafts.map { draft in
+        "• \(draft.categoryName): \(draft.amount.formatted(currency: "CNY"))"
+    }.joined(separator: "\n")
+    
+    let total = drafts.reduce(Decimal.zero) { $0 + $1.amount }
+    let totalText = "\n\n总计: \(total.formatted(currency: "CNY"))"
+    
+    Text(summary + totalText)
 }
 ```
 
@@ -81,19 +77,19 @@ Button("全部确认") {
 ## 示例对话框内容
 
 假设有3笔待确认的交易：
-- 餐饮: ¥50
-- 交通: ¥15  
-- 购物: ¥120
+- 餐饮: ¥50.00
+- 交通: ¥15.00  
+- 购物: ¥120.00
 
 对话框将显示：
 ```
 确认入账
 
-• 餐饮: ¥50.0
-• 交通: ¥15.0
-• 购物: ¥120.0
+• 餐饮: ¥50.00
+• 交通: ¥15.00
+• 购物: ¥120.00
 
-总计: ¥185.0
+总计: ¥185.00
 
 [确认全部 3 笔交易]  [取消]
 ```
