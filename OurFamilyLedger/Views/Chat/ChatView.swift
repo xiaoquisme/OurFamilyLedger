@@ -17,6 +17,9 @@ struct ChatView: View {
     // 最近截图提示
     @State private var recentScreenshot: UIImage?
     @State private var recentScreenshotAsset: PHAsset?
+    
+    // 确认对话框
+    @State private var showingConfirmAllDialog = false
 
     var body: some View {
         NavigationStack {
@@ -80,9 +83,7 @@ struct ChatView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !viewModel.pendingDrafts.isEmpty {
                         Button("全部确认") {
-                            Task {
-                                await viewModel.confirmAllDrafts()
-                            }
+                            showingConfirmAllDialog = true
                         }
                     }
                 }
@@ -99,6 +100,31 @@ struct ChatView: View {
             .sheet(item: $editingDraft) { draft in
                 EditDraftView(draft: draft) { updatedDraft in
                     viewModel.updateDraft(draft, with: updatedDraft)
+                }
+            }
+            .confirmationDialog(
+                "确认入账",
+                isPresented: $showingConfirmAllDialog,
+                presenting: viewModel.pendingDrafts
+            ) { drafts in
+                Button("确认全部 \(drafts.count) 笔交易") {
+                    Task {
+                        await viewModel.confirmAllDrafts()
+                    }
+                }
+                Button("取消", role: .cancel) {}
+            } message: { drafts in
+                if drafts.isEmpty {
+                    Text("没有待确认的交易")
+                } else {
+                    let summary = drafts.map { draft in
+                        "• \(draft.categoryName): ¥\(NSDecimalNumber(decimal: draft.amount).doubleValue)"
+                    }.joined(separator: "\n")
+                    
+                    let total = drafts.reduce(Decimal.zero) { $0 + $1.amount }
+                    let totalText = "\n\n总计: ¥\(NSDecimalNumber(decimal: total).doubleValue)"
+                    
+                    Text(summary + totalText)
                 }
             }
         }
