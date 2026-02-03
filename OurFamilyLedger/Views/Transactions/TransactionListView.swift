@@ -11,9 +11,17 @@ struct TransactionListView: View {
     @State private var showingFilters = false
     @State private var dateRange: ClosedRange<Date>?
     @State private var selectedType: TransactionType?
+    @State private var filterMonth: Date?
 
-    init(filterType: TransactionType? = nil) {
+    init(filterType: TransactionType? = nil, filterMonth: Date? = nil) {
         _selectedType = State(initialValue: filterType)
+        _filterMonth = State(initialValue: filterMonth)
+        if let month = filterMonth {
+            let calendar = Calendar.current
+            let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: month))!
+            let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+            _dateRange = State(initialValue: startOfMonth...endOfMonth)
+        }
     }
 
     private func category(for transaction: TransactionRecord) -> Category? {

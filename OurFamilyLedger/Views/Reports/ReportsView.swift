@@ -39,7 +39,7 @@ struct ReportsView: View {
                     VStack(spacing: 20) {
                         switch selectedTab {
                         case .overview:
-                            OverviewReport(transactions: monthlyTransactions)
+                            OverviewReport(transactions: monthlyTransactions, selectedMonth: selectedMonth)
                         case .category:
                             CategoryReport(transactions: monthlyTransactions)
                         case .member:
@@ -115,12 +115,13 @@ struct MonthPicker: View {
 
 struct OverviewReport: View {
     let transactions: [TransactionRecord]
+    let selectedMonth: Date
 
     var body: some View {
         VStack(spacing: 16) {
             // 收支卡片
             HStack(spacing: 16) {
-                NavigationLink(destination: TransactionListView(filterType: .expense)) {
+                NavigationLink(destination: TransactionListView(filterType: .expense, filterMonth: selectedMonth)) {
                     SummaryCard(
                         title: "支出",
                         amount: totalExpense,
@@ -130,7 +131,7 @@ struct OverviewReport: View {
                 }
                 .buttonStyle(PlainButtonStyle())
 
-                NavigationLink(destination: TransactionListView(filterType: .income)) {
+                NavigationLink(destination: TransactionListView(filterType: .income, filterMonth: selectedMonth)) {
                     SummaryCard(
                         title: "收入",
                         amount: totalIncome,
