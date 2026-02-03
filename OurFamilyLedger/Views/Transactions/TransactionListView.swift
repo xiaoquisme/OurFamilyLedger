@@ -10,8 +10,11 @@ struct TransactionListView: View {
     @State private var selectedCategory: Category?
     @State private var showingFilters = false
     @State private var dateRange: ClosedRange<Date>?
+    @State private var selectedType: TransactionType?
 
-    init() {}
+    init(filterType: TransactionType? = nil) {
+        _selectedType = State(initialValue: filterType)
+    }
 
     private func category(for transaction: TransactionRecord) -> Category? {
         guard let categoryId = transaction.categoryId else { return nil }
@@ -41,7 +44,8 @@ struct TransactionListView: View {
             .sheet(isPresented: $showingFilters) {
                 FilterView(
                     selectedCategory: $selectedCategory,
-                    dateRange: $dateRange
+                    dateRange: $dateRange,
+                    selectedType: $selectedType
                 )
             }
         }
@@ -83,6 +87,13 @@ struct TransactionListView: View {
                 let matchesNote = transaction.note.lowercased().contains(searchLower)
                 let matchesMerchant = transaction.merchant.lowercased().contains(searchLower)
                 if !matchesNote && !matchesMerchant {
+                    return false
+                }
+            }
+
+            // 交易类型过滤
+            if let type = selectedType {
+                if transaction.type != type {
                     return false
                 }
             }
@@ -262,6 +273,7 @@ struct FilterView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedCategory: Category?
     @Binding var dateRange: ClosedRange<Date>?
+    @Binding var selectedType: TransactionType?
 
     @State private var startDate = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var endDate = Date()
@@ -270,6 +282,15 @@ struct FilterView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("交易类型") {
+                    Picker("类型", selection: $selectedType) {
+                        Text("全部").tag(nil as TransactionType?)
+                        Text("支出").tag(TransactionType.expense as TransactionType?)
+                        Text("收入").tag(TransactionType.income as TransactionType?)
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 Section("日期范围") {
                     Toggle("按日期筛选", isOn: $useDateFilter)
 
@@ -283,6 +304,7 @@ struct FilterView: View {
                     Button("清除筛选") {
                         selectedCategory = nil
                         dateRange = nil
+                        selectedType = nil
                         useDateFilter = false
                     }
                     .foregroundStyle(.red)

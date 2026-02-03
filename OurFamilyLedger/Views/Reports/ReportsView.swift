@@ -120,19 +120,25 @@ struct OverviewReport: View {
         VStack(spacing: 16) {
             // 收支卡片
             HStack(spacing: 16) {
-                SummaryCard(
-                    title: "支出",
-                    amount: totalExpense,
-                    color: .red,
-                    icon: "arrow.up.circle.fill"
-                )
+                NavigationLink(destination: TransactionListView(filterType: .expense)) {
+                    SummaryCard(
+                        title: "支出",
+                        amount: totalExpense,
+                        color: .red,
+                        icon: "arrow.up.circle.fill"
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
 
-                SummaryCard(
-                    title: "收入",
-                    amount: totalIncome,
-                    color: .green,
-                    icon: "arrow.down.circle.fill"
-                )
+                NavigationLink(destination: TransactionListView(filterType: .income)) {
+                    SummaryCard(
+                        title: "收入",
+                        amount: totalIncome,
+                        color: .green,
+                        icon: "arrow.down.circle.fill"
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             // 结余卡片
