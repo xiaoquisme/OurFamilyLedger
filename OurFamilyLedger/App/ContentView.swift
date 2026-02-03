@@ -79,6 +79,9 @@ struct ContentView: View {
                 await SyncService.shared.loadFromiCloud(context: modelContext)
             }
 
+            // 等待 SwiftData 完全初始化后再检查定期交易
+            try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+
             // 检查定期交易 (每天检查一次)
             checkRecurringTransactionsIfNeeded()
         }
