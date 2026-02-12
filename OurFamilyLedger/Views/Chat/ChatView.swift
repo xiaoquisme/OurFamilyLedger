@@ -420,7 +420,9 @@ struct TransactionDraftCard: View {
 
             // 交易信息
             VStack(spacing: 8) {
+                InfoRow(label: "日期", value: draft.date.formatted(date: .numeric, time: .omitted))
                 InfoRow(label: "金额", value: "¥\(NSDecimalNumber(decimal: draft.amount).doubleValue)")
+                InfoRow(label: "类型", value: draft.type.rawValue)
                 InfoRow(label: "分类", value: draft.categoryName)
                 InfoRow(label: "付款人", value: draft.payerName)
                 InfoRow(label: "参与人", value: draft.participantNames.joined(separator: "、"))
