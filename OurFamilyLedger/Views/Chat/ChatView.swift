@@ -335,6 +335,8 @@ struct ChatMessage: Identifiable {
 
 struct ChatMessageView: View {
     let message: ChatMessage
+    @State private var showImagePreview = false
+    @State private var selectedImageIndex = 0
 
     var body: some View {
         HStack {
@@ -353,8 +355,18 @@ struct ChatMessageView: View {
                                     .scaledToFill()
                                     .frame(width: 120, height: 120)
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .onTapGesture {
+                                        selectedImageIndex = index
+                                        showImagePreview = true
+                                    }
                             }
                         }
+                    }
+                    .fullScreenCover(isPresented: $showImagePreview) {
+                        ImagePreviewView(
+                            images: message.images,
+                            currentIndex: $selectedImageIndex
+                        )
                     }
                 }
 
@@ -670,6 +682,55 @@ struct RetryButton: View {
             .clipShape(Capsule())
         }
         .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Image Preview View
+
+struct ImagePreviewView: View {
+    let images: [UIImage]
+    @Binding var currentIndex: Int
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            TabView(selection: $currentIndex) {
+                ForEach(0..<images.count, id: \.self) { index in
+                    Image(uiImage: images[index])
+                        .resizable()
+                        .scaledToFit()
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: images.count > 1 ? .always : .never))
+
+            // 顶部关闭按钮
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, .white.opacity(0.3))
+                }
+                .padding()
+            }
+
+            // 底部页码
+            if images.count > 1 {
+                VStack {
+                    Spacer()
+                    Text("\(currentIndex + 1) / \(images.count)")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding(.bottom, 40)
+                }
+            }
+        }
     }
 }
 
