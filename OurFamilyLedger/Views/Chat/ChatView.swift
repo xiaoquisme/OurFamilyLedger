@@ -433,7 +433,7 @@ struct TransactionDraftCard: View {
             // 交易信息
             VStack(spacing: 8) {
                 InfoRow(label: "日期", value: draft.date.formatted(date: .numeric, time: .omitted))
-                InfoRow(label: "金额", value: "¥\(NSDecimalNumber(decimal: draft.amount).doubleValue)")
+                InfoRow(label: "金额", value: "¥\(NSDecimalNumber(decimal: draft.amount).stringValue)")
                 InfoRow(label: "类型", value: draft.type.rawValue)
                 InfoRow(label: "分类", value: draft.categoryName)
                 InfoRow(label: "付款人", value: draft.payerName)
@@ -447,7 +447,7 @@ struct TransactionDraftCard: View {
                 }
 
                 // 分摊金额
-                Text("每人: ¥\(draft.splitAmount)")
+                Text("每人: ¥\(NSDecimalNumber(decimal: draft.splitAmount).stringValue)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
