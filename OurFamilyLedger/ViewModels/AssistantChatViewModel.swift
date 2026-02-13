@@ -34,10 +34,16 @@ final class AssistantChatViewModel: ObservableObject {
     @Published var messages: [AssistantChatMessage] = []
     @Published var isProcessing = false
     @Published var errorMessage: String?
+    @Published var canRetry = false
 
     private var modelContext: ModelContext?
     private var functionCallingService: FunctionCallingAIService?
     private let keychainService: KeychainServiceProtocol
+
+    // 重试相关
+    private var lastMessageText: String = ""
+    private var retryCount = 0
+    private let maxRetryCount = 3
 
     // MARK: - Initialization
 
@@ -89,10 +95,36 @@ final class AssistantChatViewModel: ObservableObject {
     func sendMessage(_ text: String) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
+        // 保存输入用于重试
+        lastMessageText = text
+        retryCount = 0
+        canRetry = false
+
         // 添加用户消息
         let userMessage = AssistantChatMessage(role: .user, content: text)
         messages.append(userMessage)
 
+        await executeProcessing(text: text)
+    }
+
+    /// 重试上次失败的请求
+    func retry() async {
+        guard canRetry, retryCount < maxRetryCount else { return }
+
+        retryCount += 1
+        canRetry = false
+
+        let retryMessage = AssistantChatMessage(
+            role: .system,
+            content: "正在重试 (\(retryCount)/\(maxRetryCount))..."
+        )
+        messages.append(retryMessage)
+
+        await executeProcessing(text: lastMessageText)
+    }
+
+    /// 执行处理逻辑
+    private func executeProcessing(text: String) async {
         // 检查是否配置了 AI
         guard let service = functionCallingService else {
             messages.append(AssistantChatMessage(
@@ -113,11 +145,20 @@ final class AssistantChatViewModel: ObservableObject {
                 content: response
             )
             messages.append(assistantMessage)
+
+            // 成功后重置重试状态
+            retryCount = 0
+            canRetry = false
         } catch {
             errorMessage = error.localizedDescription
+
+            let canRetryError = retryCount < maxRetryCount
+            canRetry = canRetryError
+
+            let retryHint = canRetryError ? " 点击重试按钮再试一次。" : ""
             messages.append(AssistantChatMessage(
                 role: .assistant,
-                content: "抱歉，处理请求时遇到问题：\(error.localizedDescription)"
+                content: "抱歉，处理请求时遇到问题：\(error.localizedDescription)\(retryHint)"
             ))
         }
 

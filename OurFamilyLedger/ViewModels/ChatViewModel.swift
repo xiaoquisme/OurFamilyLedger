@@ -222,6 +222,13 @@ final class ChatViewModel: ObservableObject {
         )
     }
 
+    /// 清空对话
+    func clearMessages() {
+        messages.removeAll()
+        canRetry = false
+        retryCount = 0
+    }
+
     // MARK: - Draft Management
 
     /// 确认草稿入账

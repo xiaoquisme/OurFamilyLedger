@@ -63,14 +63,20 @@ struct ChatView: View {
                             }
                         }
                     }
-                    if mode == .assistant {
-                        Menu {
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        if mode == .bookkeeping {
+                            Button(action: { viewModel.clearMessages() }) {
+                                Label("清空对话", systemImage: "trash")
+                            }
+                        } else {
                             Button(action: { assistantViewModel.clearMessages() }) {
                                 Label("清空对话", systemImage: "trash")
                             }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
                         }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
@@ -101,6 +107,7 @@ struct ChatView: View {
                     LazyVStack(spacing: 12) {
                         ForEach(viewModel.messages) { message in
                             ChatMessageView(message: message)
+                                .id(message.id)
                         }
 
                         // 待确认的交易卡片
@@ -131,6 +138,13 @@ struct ChatView: View {
                 .scrollDismissesKeyboard(.interactively)
                 .onTapGesture {
                     isInputFocused = false
+                }
+                .onChange(of: viewModel.messages.count) { _, _ in
+                    if let lastMessage = viewModel.messages.last {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
+                    }
                 }
             }
 
@@ -164,6 +178,15 @@ struct ChatView: View {
 
                         if assistantViewModel.isProcessing {
                             AssistantProcessingIndicator()
+                        }
+
+                        // 重试按钮
+                        if assistantViewModel.canRetry && !assistantViewModel.isProcessing {
+                            RetryButton {
+                                Task {
+                                    await assistantViewModel.retry()
+                                }
+                            }
                         }
                     }
                     .padding()
