@@ -216,6 +216,8 @@ struct MemberRow: View {
 struct AddMemberView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Query private var existingMembers: [Member]
+    @AppStorage("defaultMemberId") private var defaultMemberId: String = ""
 
     @State private var name = ""
     @State private var nickname = ""
@@ -290,6 +292,7 @@ struct AddMemberView: View {
     }
 
     private func addMember() {
+        let isFirstMember = existingMembers.isEmpty
         let member = Member(
             name: name,
             nickname: nickname,
@@ -297,6 +300,11 @@ struct AddMemberView: View {
             avatarColor: avatarColor
         )
         modelContext.insert(member)
+
+        if isFirstMember {
+            defaultMemberId = member.id.uuidString
+        }
+
         dismiss()
     }
 }
