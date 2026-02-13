@@ -7,88 +7,76 @@ struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel = ChatViewModel()
+    @StateObject private var assistantViewModel = AssistantChatViewModel()
 
+    @State private var mode: ChatMode = .bookkeeping
     @State private var messageText = ""
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var selectedImages: [UIImage] = []
     @State private var editingDraft: TransactionDraft?
     @FocusState private var isInputFocused: Bool
 
+    // 助手模式
+    @State private var assistantInputText = ""
+    @FocusState private var isAssistantInputFocused: Bool
+
     // 最近截图提示
     @State private var recentScreenshot: UIImage?
     @State private var recentScreenshotAsset: PHAsset?
 
+    enum ChatMode: String, CaseIterable {
+        case bookkeeping = "记账"
+        case assistant = "助手"
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // 消息列表
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(viewModel.messages) { message in
-                                ChatMessageView(message: message)
-                            }
-
-                            // 待确认的交易卡片
-                            ForEach(viewModel.pendingDrafts) { draft in
-                                TransactionDraftCard(
-                                    draft: draft,
-                                    onConfirm: { confirmDraft(draft) },
-                                    onEdit: { editingDraft = draft },
-                                    onDelete: { viewModel.deleteDraft(draft) }
-                                )
-                            }
-
-                            if viewModel.isProcessing {
-                                ProcessingIndicator()
-                            }
-
-                            // 重试按钮
-                            if viewModel.canRetry && !viewModel.isProcessing {
-                                RetryButton {
-                                    Task {
-                                        await viewModel.retry()
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                    }
-                    .scrollDismissesKeyboard(.interactively)
-                    .onTapGesture {
-                        isInputFocused = false
+                // 模式切换
+                Picker("模式", selection: $mode) {
+                    ForEach(ChatMode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue).tag(mode)
                     }
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
 
                 Divider()
 
-                // 输入区域
-                ChatInputView(
-                    text: $messageText,
-                    selectedPhotos: $selectedPhotos,
-                    selectedImages: $selectedImages,
-                    isProcessing: viewModel.isProcessing,
-                    isInputFocused: $isInputFocused,
-                    recentScreenshot: $recentScreenshot,
-                    onSend: sendMessage,
-                    onUseScreenshot: useRecentScreenshot
-                )
+                // 根据模式展示不同内容
+                switch mode {
+                case .bookkeeping:
+                    bookkeepingContent
+                case .assistant:
+                    assistantContent
+                }
             }
             .navigationTitle("记账")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if !viewModel.pendingDrafts.isEmpty {
+                    if mode == .bookkeeping && !viewModel.pendingDrafts.isEmpty {
                         Button("全部确认") {
                             Task {
                                 await viewModel.confirmAllDrafts()
                             }
                         }
                     }
+                    if mode == .assistant {
+                        Menu {
+                            Button(action: { assistantViewModel.clearMessages() }) {
+                                Label("清空对话", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
                 }
             }
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
+                assistantViewModel.configure(modelContext: modelContext)
                 checkForRecentScreenshot()
             }
             .onChange(of: scenePhase) { _, newPhase in
@@ -101,6 +89,111 @@ struct ChatView: View {
                     viewModel.updateDraft(draft, with: updatedDraft)
                 }
             }
+        }
+    }
+
+    // MARK: - 记账模式
+
+    private var bookkeepingContent: some View {
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.messages) { message in
+                            ChatMessageView(message: message)
+                        }
+
+                        // 待确认的交易卡片
+                        ForEach(viewModel.pendingDrafts) { draft in
+                            TransactionDraftCard(
+                                draft: draft,
+                                onConfirm: { confirmDraft(draft) },
+                                onEdit: { editingDraft = draft },
+                                onDelete: { viewModel.deleteDraft(draft) }
+                            )
+                        }
+
+                        if viewModel.isProcessing {
+                            ProcessingIndicator()
+                        }
+
+                        // 重试按钮
+                        if viewModel.canRetry && !viewModel.isProcessing {
+                            RetryButton {
+                                Task {
+                                    await viewModel.retry()
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onTapGesture {
+                    isInputFocused = false
+                }
+            }
+
+            Divider()
+
+            // 输入区域
+            ChatInputView(
+                text: $messageText,
+                selectedPhotos: $selectedPhotos,
+                selectedImages: $selectedImages,
+                isProcessing: viewModel.isProcessing,
+                isInputFocused: $isInputFocused,
+                recentScreenshot: $recentScreenshot,
+                onSend: sendMessage,
+                onUseScreenshot: useRecentScreenshot
+            )
+        }
+    }
+
+    // MARK: - 助手模式
+
+    private var assistantContent: some View {
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(assistantViewModel.messages) { message in
+                            AssistantMessageBubble(message: message)
+                                .id(message.id)
+                        }
+
+                        if assistantViewModel.isProcessing {
+                            AssistantProcessingIndicator()
+                        }
+                    }
+                    .padding()
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onTapGesture {
+                    isAssistantInputFocused = false
+                }
+                .onChange(of: assistantViewModel.messages.count) { _, _ in
+                    if let lastMessage = assistantViewModel.messages.last {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
+                    }
+                }
+            }
+
+            // 快捷操作
+            if assistantViewModel.messages.count <= 2 && !assistantViewModel.isProcessing {
+                AssistantQuickActionsBar(viewModel: assistantViewModel)
+            }
+
+            Divider()
+
+            AssistantInputBar(
+                text: $assistantInputText,
+                isProcessing: assistantViewModel.isProcessing,
+                isFocused: $isAssistantInputFocused,
+                onSend: sendAssistantMessage
+            )
         }
     }
 
@@ -124,6 +217,17 @@ struct ChatView: View {
     private func confirmDraft(_ draft: TransactionDraft) {
         Task {
             await viewModel.confirmDraft(draft)
+        }
+    }
+
+    private func sendAssistantMessage() {
+        let text = assistantInputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+
+        assistantInputText = ""
+
+        Task {
+            await assistantViewModel.sendMessage(text)
         }
     }
 
