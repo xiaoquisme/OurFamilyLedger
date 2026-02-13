@@ -130,7 +130,7 @@ struct TransactionListView: View {
             calendar.startOfDay(for: transaction.date)
         }
         return grouped.sorted { $0.key > $1.key }
-            .map { (key: $0.key, value: $0.value.sorted { $0.date > $1.date }) }
+            .map { (key: $0.key, value: $0.value.sorted { $0.createdAt > $1.createdAt }) }
     }
 
     private func formatSectionDate(_ date: Date) -> String {
