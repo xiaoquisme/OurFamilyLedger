@@ -1161,7 +1161,23 @@ struct ImportDataView: View {
                 return
             }
 
-            // 使用 AI 解析
+            // 检测是否是 app 自己导出的 CSV 格式
+            if CSVImportService.isNativeFormat(content: content) {
+                // 直接解析 app 导出的 CSV 格式
+                let drafts = CSVImportService.parseNativeCSV(content: content)
+
+                await MainActor.run {
+                    parsedDrafts = drafts
+                    isProcessing = false
+
+                    if drafts.isEmpty {
+                        errorMessage = "未能从文件中识别到交易记录"
+                    }
+                }
+                return
+            }
+
+            // 非原生格式，使用 AI 解析
             let providerString = UserDefaults.standard.string(forKey: "aiProvider") ?? "openai"
             let provider = AIProvider(rawValue: providerString) ?? .openai
 

@@ -187,11 +187,28 @@ final class OpenAIService: AIServiceProtocol {
         // 提取 JSON（可能被 markdown 包裹）
         var jsonString = content.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // 移除 markdown 代码块
-        if jsonString.hasPrefix("```") {
-            let lines = jsonString.components(separatedBy: "\n")
-            let filtered = lines.dropFirst().dropLast()
-            jsonString = filtered.joined(separator: "\n")
+        // 尝试使用正则表达式提取 JSON（处理 ```json ... ``` 格式）
+        if let jsonMatch = extractJSON(from: jsonString) {
+            jsonString = jsonMatch
+        } else if jsonString.hasPrefix("```") {
+            // 备用方案：移除 markdown 代码块
+            var lines = jsonString.components(separatedBy: "\n")
+            // 移除开头的 ``` 或 ```json
+            if !lines.isEmpty {
+                lines.removeFirst()
+            }
+            // 移除结尾的 ```
+            while let last = lines.last, last.trimmingCharacters(in: .whitespaces).isEmpty || last.hasPrefix("```") {
+                lines.removeLast()
+                if last.hasPrefix("```") { break }
+            }
+            jsonString = lines.joined(separator: "\n")
+        }
+
+        // 如果 jsonString 不以 [ 或 { 开头，尝试找到 JSON 的起始位置
+        jsonString = jsonString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let startIndex = jsonString.firstIndex(where: { $0 == "[" || $0 == "{" }) {
+            jsonString = String(jsonString[startIndex...])
         }
 
         guard let jsonData = jsonString.data(using: .utf8) else {
@@ -211,6 +228,18 @@ final class OpenAIService: AIServiceProtocol {
         }
 
         throw AIServiceError.parseError("JSON 格式无效")
+    }
+
+    /// 使用正则表达式从 markdown 代码块中提取 JSON
+    func extractJSON(from content: String) -> String? {
+        // 匹配 ```json ... ``` 或 ``` ... ``` 格式
+        let pattern = "```(?:json)?\\s*\\n([\\s\\S]*?)\\n```"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+              let match = regex.firstMatch(in: content, options: [], range: NSRange(content.startIndex..., in: content)),
+              let range = Range(match.range(at: 1), in: content) else {
+            return nil
+        }
+        return String(content[range])
     }
 }
 
