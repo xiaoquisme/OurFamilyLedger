@@ -16,7 +16,7 @@ struct AssistantChatView: View {
                     ScrollView {
                         LazyVStack(spacing: 12) {
                             ForEach(viewModel.messages) { message in
-                                MessageBubble(message: message)
+                                AssistantMessageBubble(message: message)
                                     .id(message.id)
                             }
 
@@ -37,13 +37,13 @@ struct AssistantChatView: View {
 
                 // 快捷操作
                 if viewModel.messages.count <= 2 && !viewModel.isProcessing {
-                    QuickActionsBar(viewModel: viewModel)
+                    AssistantQuickActionsBar(viewModel: viewModel)
                 }
 
                 Divider()
 
                 // 输入区域
-                InputBar(
+                AssistantInputBar(
                     text: $inputText,
                     isProcessing: viewModel.isProcessing,
                     isFocused: $isInputFocused,
@@ -90,7 +90,7 @@ struct AssistantChatView: View {
 
 // MARK: - Message Bubble
 
-private struct MessageBubble: View {
+struct AssistantMessageBubble: View {
     let message: AssistantChatMessage
 
     var body: some View {
@@ -157,7 +157,7 @@ private struct MessageBubble: View {
 
 // MARK: - Processing Indicator
 
-private struct AssistantProcessingIndicator: View {
+struct AssistantProcessingIndicator: View {
     @State private var dots = ""
 
     var body: some View {
@@ -196,7 +196,7 @@ private struct AssistantProcessingIndicator: View {
 
 // MARK: - Quick Actions Bar
 
-private struct QuickActionsBar: View {
+struct AssistantQuickActionsBar: View {
     @ObservedObject var viewModel: AssistantChatViewModel
 
     var body: some View {
@@ -227,7 +227,7 @@ private struct QuickActionsBar: View {
 
 // MARK: - Input Bar
 
-private struct InputBar: View {
+struct AssistantInputBar: View {
     @Binding var text: String
     let isProcessing: Bool
     var isFocused: FocusState<Bool>.Binding
