@@ -842,7 +842,7 @@ struct ImagePreviewView: View {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title)
                         .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, .white.opacity(0.3))
+                        .foregroundStyle(.white, .black.opacity(0.6))
                 }
                 .padding()
             }
