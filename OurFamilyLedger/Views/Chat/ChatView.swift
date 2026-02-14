@@ -341,6 +341,7 @@ struct ChatView: View {
 
 struct EditDraftView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query private var categories: [Category]
     let draft: TransactionDraft
     let onSave: (TransactionDraft) -> Void
 
@@ -387,7 +388,11 @@ struct EditDraftView: View {
                 }
 
                 Section("分类") {
-                    TextField("分类名称", text: $categoryName)
+                    Picker("分类", selection: $categoryName) {
+                        ForEach(filteredCategories) { category in
+                            Text(category.name).tag(category.name)
+                        }
+                    }
                 }
 
                 Section("人员") {
@@ -413,6 +418,10 @@ struct EditDraftView: View {
                 }
             }
         }
+    }
+
+    private var filteredCategories: [Category] {
+        categories.filter { $0.type == transactionType }
     }
 
     private func saveDraft() {
