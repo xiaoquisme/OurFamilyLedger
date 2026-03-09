@@ -59,21 +59,18 @@ protocol AIServiceProtocol {
 /// AI 提供商
 enum AIProvider: String, CaseIterable, Codable {
     case openai = "openai"
-    case claude = "claude"
     case custom = "custom"
 
     var displayName: String {
         switch self {
         case .openai: return "OpenAI"
-        case .claude: return "Claude"
-        case .custom: return "自定义"
+        case .custom: return "自定义 API"
         }
     }
 
     var defaultEndpoint: String {
         switch self {
         case .openai: return "https://api.openai.com/v1"
-        case .claude: return "https://api.anthropic.com/v1"
         case .custom: return ""
         }
     }
@@ -81,7 +78,6 @@ enum AIProvider: String, CaseIterable, Codable {
     var defaultModel: String {
         switch self {
         case .openai: return "gpt-4o-mini"
-        case .claude: return "claude-3-5-sonnet-20241022"
         case .custom: return ""
         }
     }

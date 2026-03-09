@@ -127,7 +127,6 @@ final class OpenAIService: AIServiceProtocol {
         if modelId.contains("gpt-4o") { return 1 }
         if modelId.contains("gpt-4") { return 2 }
         if modelId.contains("gpt-3.5") { return 3 }
-        if modelId.contains("claude") { return 4 }
         return 100
     }
 
@@ -254,12 +253,6 @@ final class AIServiceFactory {
             model: model
         )
 
-        switch provider {
-        case .openai, .custom:
-            return OpenAIService(config: config)
-        case .claude:
-            // Claude 使用 OpenAI 兼容接口
-            return OpenAIService(config: config)
-        }
+        return OpenAIService(config: config)
     }
 }
