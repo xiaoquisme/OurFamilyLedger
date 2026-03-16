@@ -50,15 +50,15 @@ final class KeychainServiceTests: XCTestCase {
     func testSaveAPIKey_storesMultipleProviders() throws {
         // Given
         let openaiKey = "openai-key"
-        let claudeKey = "claude-key"
+        let customKey = "custom-key"
 
         // When
         try sut.saveAPIKey(openaiKey, for: .openai)
-        try sut.saveAPIKey(claudeKey, for: .claude)
+        try sut.saveAPIKey(customKey, for: .custom)
 
         // Then
         XCTAssertEqual(sut.storedAPIKeys[.openai], openaiKey)
-        XCTAssertEqual(sut.storedAPIKeys[.claude], claudeKey)
+        XCTAssertEqual(sut.storedAPIKeys[.custom], customKey)
         XCTAssertEqual(sut.storedAPIKeys.count, 2)
     }
 
@@ -98,15 +98,15 @@ final class KeychainServiceTests: XCTestCase {
     func testGetAPIKey_returnsCorrectKeyForProvider() throws {
         // Given
         sut.storedAPIKeys[.openai] = "openai-key"
-        sut.storedAPIKeys[.claude] = "claude-key"
+        sut.storedAPIKeys[.custom] = "custom-key"
 
         // When
         let openaiResult = try sut.getAPIKey(for: .openai)
-        let claudeResult = try sut.getAPIKey(for: .claude)
+        let customResult = try sut.getAPIKey(for: .custom)
 
         // Then
         XCTAssertEqual(openaiResult, "openai-key")
-        XCTAssertEqual(claudeResult, "claude-key")
+        XCTAssertEqual(customResult, "custom-key")
     }
 
     func testGetAPIKey_throwsError_whenConfigured() {
@@ -134,14 +134,14 @@ final class KeychainServiceTests: XCTestCase {
     func testDeleteAPIKey_doesNotAffectOtherProviders() throws {
         // Given
         sut.storedAPIKeys[.openai] = "openai-key"
-        sut.storedAPIKeys[.claude] = "claude-key"
+        sut.storedAPIKeys[.custom] = "custom-key"
 
         // When
         try sut.deleteAPIKey(for: .openai)
 
         // Then
         XCTAssertNil(sut.storedAPIKeys[.openai])
-        XCTAssertEqual(sut.storedAPIKeys[.claude], "claude-key")
+        XCTAssertEqual(sut.storedAPIKeys[.custom], "custom-key")
     }
 
     func testDeleteAPIKey_throwsError_whenConfigured() {
@@ -190,7 +190,7 @@ final class KeychainServiceTests: XCTestCase {
     func testClearAll_removesAllData() throws {
         // Given
         sut.storedAPIKeys[.openai] = "openai-key"
-        sut.storedAPIKeys[.claude] = "claude-key"
+        sut.storedAPIKeys[.custom] = "custom-key"
         sut.storedCustomEndpoint = "https://custom.api.com"
 
         // When

@@ -498,3 +498,1205 @@ struct TestParseView: View {
         }
     }
 }
+
+// MARK: - Category Settings View
+
+struct CategorySettingsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Category.sortOrder) private var categories: [Category]
+
+    @State private var showingAddCategory = false
+
+    init() {}
+
+    private var expenseCategories: [Category] {
+        categories.filter { $0.type == .expense }
+    }
+
+    private var incomeCategories: [Category] {
+        categories.filter { $0.type == .income }
+    }
+
+    var body: some View {
+        List {
+            Section("支出分类") {
+                ForEach(expenseCategories) { category in
+                    CategoryRow(category: category)
+                }
+                .onDelete { indexSet in
+                    deleteCategories(from: expenseCategories, at: indexSet)
+                }
+            }
+
+            Section("收入分类") {
+                ForEach(incomeCategories) { category in
+                    CategoryRow(category: category)
+                }
+                .onDelete { indexSet in
+                    deleteCategories(from: incomeCategories, at: indexSet)
+                }
+            }
+
+            Section {
+                Button {
+                    showingAddCategory = true
+                } label: {
+                    Label("添加分类", systemImage: "plus")
+                }
+            }
+        }
+        .navigationTitle("分类管理")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                EditButton()
+            }
+        }
+        .sheet(isPresented: $showingAddCategory) {
+            AddCategoryView()
+        }
+    }
+
+    private func deleteCategories(from list: [Category], at offsets: IndexSet) {
+        for index in offsets {
+            let category = list[index]
+            modelContext.delete(category)
+        }
+    }
+}
+
+struct CategoryRow: View {
+    let category: Category
+
+    private var iconColor: Color {
+        let colorName = category.color
+        switch colorName.lowercased() {
+        case "red": return .red
+        case "orange": return .orange
+        case "yellow": return .yellow
+        case "green": return .green
+        case "blue": return .blue
+        case "purple": return .purple
+        case "pink": return .pink
+        case "gray", "grey": return .gray
+        case "brown": return .brown
+        case "cyan": return .cyan
+        case "mint": return .mint
+        case "teal": return .teal
+        case "indigo": return .indigo
+        default: return .blue
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(iconColor.opacity(0.15))
+                .frame(width: 44, height: 44)
+                .overlay {
+                    Image(systemName: category.icon)
+                        .font(.system(size: 20))
+                        .foregroundStyle(iconColor)
+                }
+
+            Text(category.name)
+                .font(.body)
+
+            Spacer()
+
+            if category.isDefault {
+                Text("默认")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct AddCategoryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var name = ""
+    @State private var icon = "tag"
+    @State private var color = "blue"
+    @State private var type: TransactionType = .expense
+
+    private let categoryIcons: [String] = [
+        "tag", "folder", "star", "heart", "cart", "creditcard",
+        "fork.knife", "carrot", "leaf", "birthday.cake", "wineglass",
+        "car", "bus", "bicycle", "airplane", "tram",
+        "house", "sofa", "bed.double", "washer", "lightbulb",
+        "yensign.circle", "dollarsign.square", "chart.line.uptrend.xyaxis", "banknote",
+        "person", "person.2", "figure.walk", "figure.2.and.child.holdinghands", "gift",
+        "bag", "basket", "toilet.fill", "tshirt", "paintbrush",
+        "phone", "cable.connector", "music.mic", "gamecontroller", "book",
+        "cross.case", "heart.circle", "pawprint", "graduationcap", "briefcase"
+    ]
+
+    private let categoryColors: [(name: String, color: Color)] = [
+        ("blue", .blue),
+        ("green", .green),
+        ("orange", .orange),
+        ("purple", .purple),
+        ("pink", .pink),
+        ("red", .red),
+        ("yellow", .yellow),
+        ("teal", .teal),
+        ("gray", .gray),
+        ("brown", .brown),
+        ("cyan", .cyan),
+        ("indigo", .indigo)
+    ]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("分类名称", text: $name)
+
+                    Picker("类型", selection: $type) {
+                        Text("支出").tag(TransactionType.expense)
+                        Text("收入").tag(TransactionType.income)
+                    }
+                }
+
+                Section("图标") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
+                        ForEach(categoryIcons, id: \.self) { iconName in
+                            Circle()
+                                .fill(selectedColor.opacity(icon == iconName ? 0.3 : 0.1))
+                                .frame(width: 44, height: 44)
+                                .overlay {
+                                    Image(systemName: iconName)
+                                        .font(.system(size: 18))
+                                        .foregroundStyle(icon == iconName ? selectedColor : .secondary)
+                                }
+                                .overlay {
+                                    if icon == iconName {
+                                        Circle()
+                                            .stroke(selectedColor, lineWidth: 2)
+                                    }
+                                }
+                                .onTapGesture {
+                                    icon = iconName
+                                }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section("颜色") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
+                        ForEach(categoryColors, id: \.name) { colorItem in
+                            Circle()
+                                .fill(colorItem.color.opacity(0.3))
+                                .frame(width: 44, height: 44)
+                                .overlay {
+                                    if color == colorItem.name {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(colorItem.color)
+                                    }
+                                }
+                                .onTapGesture {
+                                    color = colorItem.name
+                                }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+            .navigationTitle("添加分类")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("添加") {
+                        addCategory()
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
+        }
+    }
+
+    private var selectedColor: Color {
+        categoryColors.first { $0.name == color }?.color ?? .blue
+    }
+
+    private func addCategory() {
+        let category = Category(
+            name: name,
+            icon: icon,
+            color: color,
+            type: type
+        )
+        modelContext.insert(category)
+        dismiss()
+    }
+}
+
+// MARK: - Export Data View
+
+struct ExportDataView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var selectedMonth = Date()
+    @State private var exportAll = true
+    @State private var isExporting = false
+    @State private var exportError: String?
+    @State private var showingShareSheet = false
+    @State private var exportFileURL: URL?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                VStack(spacing: 16) {
+                    Toggle("导出所有数据", isOn: $exportAll)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                    if !exportAll {
+                        DatePicker(
+                            "选择月份",
+                            selection: $selectedMonth,
+                            displayedComponents: .date
+                        )
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+
+                Button {
+                    exportData()
+                } label: {
+                    HStack {
+                        if isExporting {
+                            ProgressView()
+                                .tint(.white)
+                                .padding(.trailing, 4)
+                        }
+                        Image(systemName: "square.and.arrow.up")
+                        Text("导出 CSV")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(isExporting)
+
+                Text("导出后可通过「文件」App、AirDrop、邮件等方式分享")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                if let error = exportError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("导出数据")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+            }
+            .sheet(isPresented: $showingShareSheet) {
+                if let url = exportFileURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func exportData() {
+        isExporting = true
+        exportError = nil
+
+        Task {
+            do {
+                var descriptor = FetchDescriptor<TransactionRecord>(
+                    sortBy: [SortDescriptor(\.date, order: .reverse)]
+                )
+
+                if !exportAll {
+                    let calendar = Calendar.current
+                    let year = calendar.component(.year, from: selectedMonth)
+                    let month = calendar.component(.month, from: selectedMonth)
+
+                    let startOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1))!
+                    let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+
+                    descriptor.predicate = #Predicate<TransactionRecord> { transaction in
+                        transaction.date >= startOfMonth && transaction.date <= endOfMonth
+                    }
+                }
+
+                let transactions = try modelContext.fetch(descriptor)
+
+                if transactions.isEmpty {
+                    await MainActor.run {
+                        exportError = "没有可导出的数据"
+                        isExporting = false
+                    }
+                    return
+                }
+
+                let csvContent = generateCSV(from: transactions)
+
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
+                let fileName = "OurFamilyLedger_\(dateFormatter.string(from: Date())).csv"
+
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+                try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
+
+                await MainActor.run {
+                    exportFileURL = tempURL
+                    showingShareSheet = true
+                    isExporting = false
+                }
+            } catch {
+                await MainActor.run {
+                    exportError = "导出失败: \(error.localizedDescription)"
+                    isExporting = false
+                }
+            }
+        }
+    }
+
+    private func generateCSV(from transactions: [TransactionRecord]) -> String {
+        var csv = "id,date,amount,type,category_id,payer_id,participants,note,merchant,source,created_at,updated_at\n"
+
+        let dateFormatter = ISO8601DateFormatter()
+
+        for transaction in transactions {
+            let participantsStr = transaction.participantIds.map { $0.uuidString }.joined(separator: ";")
+            let typeStr = transaction.type == .expense ? "expense" : "income"
+
+            let row = [
+                transaction.id.uuidString,
+                dateFormatter.string(from: transaction.date),
+                "\(transaction.amount)",
+                typeStr,
+                transaction.categoryId?.uuidString ?? "",
+                transaction.payerId?.uuidString ?? "",
+                participantsStr,
+                escapeCSV(transaction.note),
+                escapeCSV(transaction.merchant),
+                transaction.source.rawValue,
+                dateFormatter.string(from: transaction.createdAt),
+                dateFormatter.string(from: transaction.updatedAt)
+            ].joined(separator: ",")
+
+            csv += row + "\n"
+        }
+
+        return csv
+    }
+
+    private func escapeCSV(_ value: String) -> String {
+        if value.contains(",") || value.contains("\"") || value.contains("\n") {
+            return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return value
+    }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Import Data View
+
+struct ImportDataView: View {
+    @Environment(\.modelContext) private var modelContext
+    @State private var showingFilePicker = false
+    @State private var isProcessing = false
+    @State private var errorMessage: String?
+    @State private var parsedDrafts: [TransactionDraft] = []
+    @State private var fileName: String?
+    @State private var importSuccess = false
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                Image(systemName: "doc.badge.arrow.up")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.blue)
+
+                Text("智能导入数据")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("选择文件后，AI 将自动识别并解析交易记录")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+
+                Button {
+                    showingFilePicker = true
+                } label: {
+                    HStack {
+                        Image(systemName: "folder")
+                        Text(fileName ?? "选择文件")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+                .buttonStyle(.bordered)
+                .padding(.horizontal)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("支持的文件格式:")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Text("• CSV 文件 (.csv)")
+                    Text("• 文本文件 (.txt)")
+                    Text("• Excel 导出的账单")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal)
+
+                if isProcessing {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("AI 正在解析文件...")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal)
+                }
+
+                if !parsedDrafts.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("识别到 \(parsedDrafts.count) 笔交易")
+                                .font(.headline)
+                            Spacer()
+                            Button("全部导入") {
+                                importAllDrafts()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding(.horizontal)
+
+                        ForEach(parsedDrafts) { draft in
+                            ImportDraftRow(draft: draft) {
+                                importDraft(draft)
+                            } onDelete: {
+                                parsedDrafts.removeAll { $0.id == draft.id }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+
+                if importSuccess {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("导入成功！")
+                    }
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                Spacer(minLength: 40)
+            }
+            .padding(.top, 24)
+        }
+        .navigationTitle("导入数据")
+        .fileImporter(
+            isPresented: $showingFilePicker,
+            allowedContentTypes: [.commaSeparatedText, .plainText, .text],
+            allowsMultipleSelection: false
+        ) { result in
+            handleFileSelection(result)
+        }
+    }
+
+    private func handleFileSelection(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+
+            fileName = url.lastPathComponent
+            isProcessing = true
+            errorMessage = nil
+            parsedDrafts = []
+            importSuccess = false
+
+            Task {
+                await parseFile(at: url)
+            }
+
+        case .failure(let error):
+            errorMessage = "选择文件失败: \(error.localizedDescription)"
+        }
+    }
+
+    private func parseFile(at url: URL) async {
+        do {
+            guard url.startAccessingSecurityScopedResource() else {
+                await MainActor.run {
+                    errorMessage = "无法访问文件"
+                    isProcessing = false
+                }
+                return
+            }
+
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            let content = try String(contentsOf: url, encoding: .utf8)
+
+            guard !content.isEmpty else {
+                await MainActor.run {
+                    errorMessage = "文件内容为空"
+                    isProcessing = false
+                }
+                return
+            }
+
+            if CSVImportService.isNativeFormat(content: content) {
+                let drafts = CSVImportService.parseNativeCSV(content: content)
+
+                await MainActor.run {
+                    parsedDrafts = drafts
+                    isProcessing = false
+
+                    if drafts.isEmpty {
+                        errorMessage = "未能从文件中识别到交易记录"
+                    }
+                }
+                return
+            }
+
+            let providerString = UserDefaults.standard.string(forKey: "aiProvider") ?? "openai"
+            let provider = AIProvider(rawValue: providerString) ?? .openai
+
+            guard let apiKey = try? KeychainService.shared.getAPIKey(for: provider),
+                  !apiKey.isEmpty else {
+                await MainActor.run {
+                    errorMessage = "请先在设置中配置 API Key"
+                    isProcessing = false
+                }
+                return
+            }
+
+            let endpoint = try? KeychainService.shared.getCustomEndpoint()
+            let model = UserDefaults.standard.string(forKey: "aiModel")
+            let aiService = AIServiceFactory.create(provider: provider, apiKey: apiKey, endpoint: endpoint, model: model)
+
+            let prompt = """
+            请从以下文件内容中识别所有交易记录。这可能是银行账单、支付记录或其他财务数据。
+            请提取每笔交易的日期、金额、分类、备注等信息。
+
+            文件内容:
+            \(content.prefix(8000))
+            """
+
+            let drafts = try await aiService.parseTransaction(from: prompt)
+
+            await MainActor.run {
+                parsedDrafts = drafts
+                isProcessing = false
+
+                if drafts.isEmpty {
+                    errorMessage = "未能从文件中识别到交易记录"
+                }
+            }
+
+        } catch {
+            await MainActor.run {
+                errorMessage = "解析失败: \(error.localizedDescription)"
+                isProcessing = false
+            }
+        }
+    }
+
+    private func importDraft(_ draft: TransactionDraft) {
+        let transaction = TransactionRecord(
+            date: draft.date,
+            amount: draft.amount,
+            type: draft.type,
+            categoryId: nil,
+            payerId: nil,
+            participantIds: [],
+            note: draft.note,
+            merchant: draft.merchant,
+            source: .text
+        )
+
+        modelContext.insert(transaction)
+        parsedDrafts.removeAll { $0.id == draft.id }
+
+        if parsedDrafts.isEmpty {
+            importSuccess = true
+        }
+    }
+
+    private func importAllDrafts() {
+        for draft in parsedDrafts {
+            let transaction = TransactionRecord(
+                date: draft.date,
+                amount: draft.amount,
+                type: draft.type,
+                categoryId: nil,
+                payerId: nil,
+                participantIds: [],
+                note: draft.note,
+                merchant: draft.merchant,
+                source: .text
+            )
+            modelContext.insert(transaction)
+        }
+
+        parsedDrafts = []
+        importSuccess = true
+    }
+}
+
+// MARK: - Import Draft Row
+
+struct ImportDraftRow: View {
+    let draft: TransactionDraft
+    let onImport: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(draft.type == .expense ? "支出" : "收入")
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(draft.type == .expense ? Color.red.opacity(0.1) : Color.green.opacity(0.1))
+                        .foregroundStyle(draft.type == .expense ? .red : .green)
+                        .clipShape(Capsule())
+
+                    Text("¥\(NSDecimalNumber(decimal: draft.amount).doubleValue, specifier: "%.2f")")
+                        .font(.headline)
+                }
+
+                Text(draft.note.isEmpty ? draft.categoryName : draft.note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text(draft.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Spacer()
+
+            HStack(spacing: 8) {
+                Button(action: onDelete) {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+
+                Button(action: onImport) {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+    }
+}
+
+// MARK: - iCloud Status View
+
+struct iCloudStatusView: View {
+    @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var syncService = SyncService.shared
+
+    @State private var iCloudAvailable = false
+    @State private var containerPath: String?
+    @State private var documentsPath: String?
+    @State private var files: [iCloudFileInfo] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    @State private var showingClearConfirmation = false
+    @State private var isClearing = false
+    @State private var selectedFileForShare: URL?
+    @State private var showingShareSheet = false
+    @State private var isPreparingShare = false
+
+    var body: some View {
+        List {
+            Section("连接状态") {
+                HStack {
+                    Text("iCloud 状态")
+                    Spacer()
+                    if iCloudAvailable {
+                        Label("可用", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Label("不可用", systemImage: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                if let lastSync = syncService.lastSyncTime {
+                    HStack {
+                        Text("上次同步")
+                        Spacer()
+                        Text(lastSync.formatted(date: .abbreviated, time: .shortened))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let error = syncService.syncError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+
+            Section {
+                Button {
+                    Task {
+                        await syncService.syncToiCloud(context: modelContext)
+                        await refreshStatus()
+                    }
+                } label: {
+                    HStack {
+                        Text("同步数据到 iCloud")
+                        Spacer()
+                        if syncService.isSyncing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+                .disabled(syncService.isSyncing)
+
+                Button {
+                    Task {
+                        await syncService.loadFromiCloud(context: modelContext)
+                        await refreshStatus()
+                    }
+                } label: {
+                    HStack {
+                        Text("从 iCloud 加载数据")
+                        Spacer()
+                        if syncService.isSyncing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "icloud.and.arrow.down")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+                .disabled(syncService.isSyncing)
+            } header: {
+                Text("同步操作")
+            } footer: {
+                Text("同步会将本地数据写入 iCloud CSV 文件，方便跨设备共享和备份")
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("如何在「文件」App 中查看数据：")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("打开「文件」App", systemImage: "1.circle.fill")
+                        Label("点击「浏览」→「iCloud 云盘」", systemImage: "2.circle.fill")
+                        Label("找到「一家账本」文件夹", systemImage: "3.circle.fill")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            } header: {
+                Text("使用说明")
+            }
+
+            if iCloudAvailable {
+                Section("容器路径") {
+                    if let path = containerPath {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("iCloud 容器")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(path)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
+                    if let path = documentsPath {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Documents 目录")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(path)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                Section {
+                    if isLoading {
+                        HStack {
+                            ProgressView()
+                            Text("加载中...")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if files.isEmpty {
+                        Text("暂无文件")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(files) { file in
+                            Button {
+                                if !file.isDirectory {
+                                    prepareAndShareFile(at: file.path)
+                                }
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack {
+                                            Image(systemName: file.isDirectory ? "folder.fill" : "doc.fill")
+                                                .foregroundStyle(file.isDirectory ? .blue : .gray)
+                                            Text(file.name)
+                                                .fontWeight(.medium)
+                                                .foregroundStyle(.primary)
+                                        }
+
+                                        Text(file.relativePath)
+                                            .font(.system(.caption2, design: .monospaced))
+                                            .foregroundStyle(.secondary)
+
+                                        if !file.isDirectory {
+                                            Text(file.sizeString)
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    if !file.isDirectory {
+                                        if isPreparingShare && selectedFileForShare?.path == file.path {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                        } else {
+                                            Image(systemName: "square.and.arrow.up")
+                                                .foregroundStyle(.blue)
+                                                .font(.caption)
+                                        }
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.vertical, 4)
+                            .disabled(isPreparingShare)
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("文件列表")
+                        Spacer()
+                        Text("\(files.count) 项")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if let error = errorMessage {
+                Section {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                }
+            }
+
+            Section {
+                Button {
+                    Task {
+                        await refreshStatus()
+                    }
+                } label: {
+                    HStack {
+                        Text("刷新状态")
+                        Spacer()
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .disabled(isLoading)
+            }
+
+            Section {
+                Button(role: .destructive) {
+                    showingClearConfirmation = true
+                } label: {
+                    HStack {
+                        Text("清除 iCloud 数据")
+                        Spacer()
+                        if isClearing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+                .disabled(isClearing || !iCloudAvailable)
+            } header: {
+                Text("危险操作")
+            } footer: {
+                Text("这将删除 iCloud 容器中的所有 CSV 文件，本地数据不受影响")
+            }
+        }
+        .navigationTitle("iCloud 状态")
+        .onAppear {
+            Task {
+                await refreshStatus()
+            }
+        }
+        .alert("确认清除", isPresented: $showingClearConfirmation) {
+            Button("取消", role: .cancel) {}
+            Button("清除", role: .destructive) {
+                Task {
+                    isClearing = true
+                    do {
+                        try await syncService.clearICloudData()
+                        await refreshStatus()
+                    } catch {
+                        errorMessage = error.localizedDescription
+                    }
+                    isClearing = false
+                }
+            }
+        } message: {
+            Text("确定要删除 iCloud 容器中的所有数据吗？此操作无法撤销。")
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = selectedFileForShare {
+                ShareSheet(activityItems: [url])
+            }
+        }
+    }
+
+    private func refreshStatus() async {
+        isLoading = true
+        errorMessage = nil
+
+        let fileManager = FileManager.default
+        iCloudAvailable = fileManager.ubiquityIdentityToken != nil
+
+        guard iCloudAvailable else {
+            isLoading = false
+            return
+        }
+
+        let containerIdentifier = "iCloud.com.xiaoquisme.ourfamilyledger"
+        if let containerURL = fileManager.url(forUbiquityContainerIdentifier: containerIdentifier) {
+            containerPath = containerURL.path
+            let documentsURL = containerURL.appendingPathComponent("Documents")
+            documentsPath = documentsURL.path
+
+            if !fileManager.fileExists(atPath: documentsURL.path) {
+                try? fileManager.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+            }
+
+            await loadFiles(at: documentsURL, basePath: documentsURL.path)
+        } else {
+            errorMessage = "无法获取 iCloud 容器路径"
+        }
+
+        isLoading = false
+    }
+
+    private func loadFiles(at url: URL, basePath: String) async {
+        let fileManager = FileManager.default
+        var fileList: [iCloudFileInfo] = []
+
+        do {
+            let contents = try fileManager.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey],
+                options: .skipsHiddenFiles
+            )
+
+            for fileURL in contents {
+                let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+                let isDirectory = resourceValues?.isDirectory ?? false
+                let size = resourceValues?.fileSize ?? 0
+
+                let relativePath = String(fileURL.path.dropFirst(basePath.count + 1))
+
+                let info = iCloudFileInfo(
+                    name: fileURL.lastPathComponent,
+                    path: fileURL.path,
+                    relativePath: relativePath.isEmpty ? fileURL.lastPathComponent : relativePath,
+                    isDirectory: isDirectory,
+                    size: Int64(size)
+                )
+                fileList.append(info)
+
+                if isDirectory {
+                    let subContents = try fileManager.contentsOfDirectory(
+                        at: fileURL,
+                        includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+                        options: .skipsHiddenFiles
+                    )
+
+                    for subURL in subContents {
+                        let subValues = try? subURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+                        let subIsDir = subValues?.isDirectory ?? false
+                        let subSize = subValues?.fileSize ?? 0
+
+                        let subRelativePath = String(subURL.path.dropFirst(basePath.count + 1))
+
+                        let subInfo = iCloudFileInfo(
+                            name: subURL.lastPathComponent,
+                            path: subURL.path,
+                            relativePath: subRelativePath,
+                            isDirectory: subIsDir,
+                            size: Int64(subSize)
+                        )
+                        fileList.append(subInfo)
+                    }
+                }
+            }
+        } catch {
+            errorMessage = "读取文件列表失败: \(error.localizedDescription)"
+        }
+
+        files = fileList.sorted { $0.name < $1.name }
+    }
+
+    private func prepareAndShareFile(at path: String) {
+        let fileURL = URL(fileURLWithPath: path)
+        selectedFileForShare = fileURL
+        isPreparingShare = true
+
+        Task {
+            let fileManager = FileManager.default
+
+            do {
+                try fileManager.startDownloadingUbiquitousItem(at: fileURL)
+
+                var attempts = 0
+                while attempts < 20 {
+                    let resourceValues = try? fileURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
+                    let status = resourceValues?.ubiquitousItemDownloadingStatus
+
+                    if status == .current || fileManager.fileExists(atPath: path) {
+                        break
+                    }
+
+                    try await Task.sleep(nanoseconds: 500_000_000)
+                    attempts += 1
+                }
+            } catch {
+                print("下载文件时出错（可能不是 iCloud 文件）: \(error)")
+            }
+
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileURL.lastPathComponent)
+
+            do {
+                if fileManager.fileExists(atPath: tempURL.path) {
+                    try fileManager.removeItem(at: tempURL)
+                }
+
+                try fileManager.copyItem(at: fileURL, to: tempURL)
+
+                await MainActor.run {
+                    selectedFileForShare = tempURL
+                    isPreparingShare = false
+                    showingShareSheet = true
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "准备分享文件失败: \(error.localizedDescription)"
+                    isPreparingShare = false
+                }
+            }
+        }
+    }
+}
+
+// MARK: - iCloud File Info
+
+struct iCloudFileInfo: Identifiable {
+    let id = UUID()
+    let name: String
+    let path: String
+    let relativePath: String
+    let isDirectory: Bool
+    let size: Int64
+
+    var sizeString: String {
+        if size < 1024 {
+            return "\(size) B"
+        } else if size < 1024 * 1024 {
+            return String(format: "%.1f KB", Double(size) / 1024)
+        } else {
+            return String(format: "%.1f MB", Double(size) / (1024 * 1024))
+        }
+    }
+}

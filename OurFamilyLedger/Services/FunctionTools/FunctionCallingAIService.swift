@@ -208,18 +208,6 @@ final class FunctionCallingAIService {
             "tools": FunctionTool.allDefinitions
         ]
 
-        // Claude API 特殊处理
-        if config.provider == .claude {
-            // Claude 使用不同的 tools 格式
-            body["tools"] = FunctionTool.allCases.map { tool in
-                [
-                    "name": tool.rawValue,
-                    "description": tool.description,
-                    "input_schema": tool.parameters
-                ]
-            }
-        }
-
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await session.data(for: request)
