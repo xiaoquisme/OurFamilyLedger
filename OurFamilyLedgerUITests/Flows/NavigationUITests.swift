@@ -209,6 +209,87 @@ final class NavigationUITests: XCTestCase {
         XCTAssertTrue(app.exists, "App crashed during deep navigation")
     }
 
+    // MARK: - Reports → Transaction List → Detail Navigation Tests
+
+    /// Regression test for: tapping a transaction row from the Reports-filtered list
+    /// should navigate *forward* to the detail view, not pop back to Reports.
+    ///
+    /// Root cause: TransactionListView was always creating its own NavigationStack,
+    /// causing nested stacks when pushed from ReportsView. The fix adds an
+    /// `embedsNavigation: false` parameter so the outer stack handles navigation.
+    func testReports_tapSummaryCard_navigatesToTransactionList() throws {
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+
+        // Navigate to Reports tab (index 2: 记账=0, 明细=1, 报表=2)
+        let reportsTab = tabBar.buttons["报表"]
+        guard reportsTab.waitForExistence(timeout: 3) else {
+            XCTSkip("Reports tab not found")
+            return
+        }
+        reportsTab.tap()
+        Thread.sleep(forTimeInterval: 0.5)
+
+        // Tap the expense summary card (支出) to push TransactionListView
+        let expenseCard = app.staticTexts["支出"].firstMatch
+        guard expenseCard.waitForExistence(timeout: 3) else {
+            XCTSkip("Expense card not found — no report data available")
+            return
+        }
+        expenseCard.tap()
+        Thread.sleep(forTimeInterval: 0.8)
+
+        // After tapping, we should be on the transaction list (明细 title),
+        // NOT have been popped back to the reports page.
+        let detailTitle = app.navigationBars["明细"]
+        XCTAssertTrue(
+            detailTitle.waitForExistence(timeout: 3),
+            "Expected to navigate forward to transaction list (明细), but ended up somewhere else — possible nested NavigationStack regression"
+        )
+    }
+
+    func testReports_tapSummaryCard_thenTapRow_navigatesToDetail() throws {
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+
+        let reportsTab = tabBar.buttons["报表"]
+        guard reportsTab.waitForExistence(timeout: 3) else {
+            XCTSkip("Reports tab not found")
+            return
+        }
+        reportsTab.tap()
+        Thread.sleep(forTimeInterval: 0.5)
+
+        let expenseCard = app.staticTexts["支出"].firstMatch
+        guard expenseCard.waitForExistence(timeout: 3) else {
+            XCTSkip("Expense card not found — no report data available")
+            return
+        }
+        expenseCard.tap()
+        Thread.sleep(forTimeInterval: 0.8)
+
+        // Verify we reached the list, then try tapping a transaction row
+        guard app.navigationBars["明细"].waitForExistence(timeout: 3) else {
+            XCTFail("Did not navigate to transaction list")
+            return
+        }
+
+        let firstCell = app.cells.firstMatch
+        guard firstCell.waitForExistence(timeout: 3) else {
+            XCTSkip("No transactions in the list to tap")
+            return
+        }
+        firstCell.tap()
+        Thread.sleep(forTimeInterval: 0.8)
+
+        // Should now be on the detail page, not popped back to reports
+        let detailNavBar = app.navigationBars["交易详情"]
+        XCTAssertTrue(
+            detailNavBar.waitForExistence(timeout: 3),
+            "Expected detail view (交易详情) after tapping row, but it was not shown — possible nested NavigationStack regression causing pop-back"
+        )
+    }
+
     // MARK: - Orientation Tests
 
     func testRotation_doesNotCrash() throws {

@@ -121,7 +121,7 @@ struct OverviewReport: View {
         VStack(spacing: 16) {
             // 收支卡片
             HStack(spacing: 16) {
-                NavigationLink(destination: TransactionListView(filterType: .expense, filterMonth: selectedMonth)) {
+                NavigationLink(destination: TransactionListView(filterType: .expense, filterMonth: selectedMonth, embedsNavigation: false)) {
                     SummaryCard(
                         title: "支出",
                         amount: totalExpense,
@@ -131,7 +131,7 @@ struct OverviewReport: View {
                 }
                 .buttonStyle(PlainButtonStyle())
 
-                NavigationLink(destination: TransactionListView(filterType: .income, filterMonth: selectedMonth)) {
+                NavigationLink(destination: TransactionListView(filterType: .income, filterMonth: selectedMonth, embedsNavigation: false)) {
                     SummaryCard(
                         title: "收入",
                         amount: totalIncome,

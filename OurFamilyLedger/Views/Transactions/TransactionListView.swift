@@ -13,7 +13,10 @@ struct TransactionListView: View {
     @State private var selectedType: TransactionType?
     @State private var filterMonth: Date?
 
-    init(filterType: TransactionType? = nil, filterMonth: Date? = nil) {
+    let embedsNavigation: Bool
+
+    init(filterType: TransactionType? = nil, filterMonth: Date? = nil, embedsNavigation: Bool = true) {
+        self.embedsNavigation = embedsNavigation
         _selectedType = State(initialValue: filterType)
         _filterMonth = State(initialValue: filterMonth)
         if let month = filterMonth {
@@ -30,32 +33,38 @@ struct TransactionListView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if transactions.isEmpty {
-                    EmptyTransactionsView()
-                } else {
-                    transactionList
+        if embedsNavigation {
+            NavigationStack { listContent }
+        } else {
+            listContent
+        }
+    }
+
+    private var listContent: some View {
+        Group {
+            if transactions.isEmpty {
+                EmptyTransactionsView()
+            } else {
+                transactionList
+            }
+        }
+        .navigationTitle("明细")
+        .searchable(text: $searchText, prompt: "搜索交易")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingFilters = true
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
                 }
             }
-            .navigationTitle("明细")
-            .searchable(text: $searchText, prompt: "搜索交易")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingFilters = true
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                    }
-                }
-            }
-            .sheet(isPresented: $showingFilters) {
-                FilterView(
-                    selectedCategory: $selectedCategory,
-                    dateRange: $dateRange,
-                    selectedType: $selectedType
-                )
-            }
+        }
+        .sheet(isPresented: $showingFilters) {
+            FilterView(
+                selectedCategory: $selectedCategory,
+                dateRange: $dateRange,
+                selectedType: $selectedType
+            )
         }
     }
 
