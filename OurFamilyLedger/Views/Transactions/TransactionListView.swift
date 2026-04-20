@@ -62,7 +62,7 @@ struct TransactionListView: View {
             ForEach(groupedTransactions, id: \.key) { date, items in
                 Section {
                     ForEach(items) { transaction in
-                        NavigationLink(value: transaction) {
+                        NavigationLink(destination: TransactionDetailView(transaction: transaction)) {
                             TransactionRowView(transaction: transaction, category: category(for: transaction))
                         }
                     }
@@ -80,9 +80,6 @@ struct TransactionListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationDestination(for: TransactionRecord.self) { transaction in
-            TransactionDetailView(transaction: transaction)
-        }
     }
 
     private var filteredTransactions: [TransactionRecord] {
