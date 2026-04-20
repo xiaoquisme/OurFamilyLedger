@@ -40,11 +40,13 @@ struct ContentView: View {
                 }
                 .tag(Tab.chat)
 
-            TransactionListView()
-                .tabItem {
-                    Label(Tab.transactions.rawValue, systemImage: Tab.transactions.icon)
-                }
-                .tag(Tab.transactions)
+            NavigationStack {
+                TransactionListView()
+            }
+            .tabItem {
+                Label(Tab.transactions.rawValue, systemImage: Tab.transactions.icon)
+            }
+            .tag(Tab.transactions)
 
             ReportsView()
                 .tabItem {
