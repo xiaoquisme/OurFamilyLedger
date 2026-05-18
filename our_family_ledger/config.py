@@ -14,15 +14,39 @@ except ImportError:  # Python < 3.11
     except ImportError:
         tomllib = None  # type: ignore[assignment]
 
-import tomli_w  # only needed for writing
-
 DATA_DIR = Path.home() / ".our-family-ledger"
 CONFIG_FILE = DATA_DIR / "config.toml"
 DB_FILE = DATA_DIR / "data.db"
 
+# CSV column headers — must match TransactionCSV.headers in the iOS app
+TRANSACTION_HEADERS = [
+    "id", "created_at", "updated_at", "date", "amount", "type",
+    "category", "payer", "participants", "note", "merchant",
+    "source", "ocr_text", "currency",
+]
+
 # ---------------------------------------------------------------------------
 # DB initialisation
 # ---------------------------------------------------------------------------
+
+_CREATE_TRANSACTIONS = """
+CREATE TABLE IF NOT EXISTS transactions (
+    id            TEXT PRIMARY KEY,
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL,
+    date          TEXT NOT NULL,
+    amount        TEXT NOT NULL,
+    type          TEXT NOT NULL,
+    category      TEXT NOT NULL DEFAULT '',
+    payer         TEXT NOT NULL DEFAULT '',
+    participants  TEXT NOT NULL DEFAULT '',
+    note          TEXT NOT NULL DEFAULT '',
+    merchant      TEXT NOT NULL DEFAULT '',
+    source        TEXT NOT NULL DEFAULT 'manual',
+    ocr_text      TEXT,
+    currency      TEXT NOT NULL DEFAULT 'CNY'
+);
+"""
 
 _CREATE_MEMBERS = """
 CREATE TABLE IF NOT EXISTS members (
@@ -44,6 +68,7 @@ def init_db(db_path: Path | None = None) -> None:
         db_path = DB_FILE
     conn = sqlite3.connect(db_path)
     try:
+        conn.execute(_CREATE_TRANSACTIONS)
         conn.execute(_CREATE_MEMBERS)
         conn.commit()
     finally:

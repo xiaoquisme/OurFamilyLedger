@@ -69,6 +69,7 @@ CLAUDE.md
 __pycache__/
 *.pyc
 *.pyo
+*.py[cod]
 .venv/
 *.egg-info/
 dist/
