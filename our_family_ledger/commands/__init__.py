@@ -1,1 +1,1 @@
-"""Commands package for Our Family Ledger."""
+"""our_family_ledger.commands package."""

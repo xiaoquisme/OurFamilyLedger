@@ -67,8 +67,11 @@ CLAUDE.md
 
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
 .venv/
 *.egg-info/
 dist/
 .pytest_cache/
+.coverage
+htmlcov/
