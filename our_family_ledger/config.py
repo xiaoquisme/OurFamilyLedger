@@ -5,6 +5,10 @@ from __future__ import annotations
 import sqlite3
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from our_family_ledger.ai.openai_client import AIConfig
 
 try:
     import tomllib
@@ -138,3 +142,29 @@ def write_config(data: dict) -> None:
         CONFIG_FILE.write_text(toml_str, encoding="utf-8")
     else:
         CONFIG_FILE.write_bytes(toml_str)
+
+
+def load_ai_config() -> "AIConfig":
+    """Load [ai] section from config.toml and return an AIConfig instance.
+
+    Returns an AIConfig with empty api_key if the section is missing.
+    """
+    from our_family_ledger.ai.openai_client import AIConfig
+
+    config = read_config()
+    return AIConfig.from_dict(config.get("ai", {}))
+
+
+def save_ai_config(ai_config: "AIConfig") -> None:
+    """Persist *ai_config* into the [ai] section of config.toml.
+
+    Preserves existing sections (e.g. [ledger]).
+    """
+    config = read_config()
+    config["ai"] = {
+        "provider": ai_config.provider,
+        "endpoint": ai_config.endpoint,
+        "model": ai_config.model,
+        "api_key": ai_config.api_key,
+    }
+    write_config(config)

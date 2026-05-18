@@ -10,6 +10,7 @@ from our_family_ledger.commands import setup as setup_cmd
 from our_family_ledger.commands import report as report_cmd
 from our_family_ledger.commands.import_cmd import import_cmd
 from our_family_ledger.commands.export_cmd import export_cmd
+from our_family_ledger.commands import chat as chat_cmd
 
 app = typer.Typer(
     name="ledger",
@@ -32,6 +33,7 @@ app.add_typer(report_cmd.app, name="report", help="Monthly statistics report.")
 app.command("setup")(setup_cmd.setup)
 app.command("import")(import_cmd)
 app.command("export")(export_cmd)
+app.command("chat")(chat_cmd.chat)
 
 
 def main() -> None:  # pragma: no cover
