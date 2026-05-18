@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Callable
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Callable, Optional
 
 import typer
 from rich import print as rprint
@@ -12,7 +15,7 @@ from rich.table import Table
 
 from our_family_ledger.ai.openai_client import AIConfig, OpenAIClient, OpenAIError
 from our_family_ledger.ai.prompts import TransactionDraft
-from our_family_ledger.config import load_ai_config, save_ai_config
+from our_family_ledger.config import get_connection, init_db, load_ai_config, save_ai_config, DB_FILE
 
 console = Console()
 
@@ -198,10 +201,38 @@ def chat() -> None:
 
     client = OpenAIClient(ai_config)
 
+    # Ensure DB is initialised
+    init_db()
+
     def _save(draft: TransactionDraft) -> None:
-        """Persist a confirmed draft. (TransactionRepository integration point.)"""
-        # TODO: integrate with TransactionRepository.create() (TES-38)
-        # For now, we simply acknowledge — storage will be wired in a follow-up.
-        pass
+        """Persist a confirmed draft to the SQLite transactions table."""
+        now = datetime.now(timezone.utc).isoformat()
+        tx_id = str(uuid.uuid4())
+        participants_str = ", ".join(draft.participants)
+        tx_type = "支出" if draft.type == "expense" else "收入"
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO transactions
+                    (id, created_at, updated_at, date, amount, type,
+                     category, payer, participants, note, merchant, source, currency)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    tx_id, now, now,
+                    draft.date,
+                    str(draft.amount),
+                    tx_type,
+                    draft.category,
+                    draft.payer,
+                    participants_str,
+                    draft.note,
+                    draft.merchant,
+                    "chat",
+                    "CNY",
+                ),
+            )
+            conn.commit()
 
     _run_chat_loop(client, _save)

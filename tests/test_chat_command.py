@@ -396,6 +396,47 @@ class TestChatCommand:
         # Should not crash
         assert result.exit_code == 0
 
+    def test_y_confirm_inserts_transaction(self, isolated_data_dir, monkeypatch):
+        """DB integration: confirming y writes a real row to SQLite transactions table."""
+        import sqlite3
+        from our_family_ledger.cli import app
+        from our_family_ledger.ai.openai_client import AIConfig, OpenAIClient
+        import our_family_ledger.config as cfg
+        from typer.testing import CliRunner
+
+        draft = _make_draft(amount=45.0, category="餐饮", payer="我", note="买菜")
+
+        mock_client = MagicMock(spec=OpenAIClient)
+        mock_client.parse_transaction.return_value = [draft]
+
+        with patch(
+            "our_family_ledger.commands.chat.OpenAIClient",
+            return_value=mock_client,
+        ):
+            with patch(
+                "our_family_ledger.commands.chat.load_ai_config",
+                return_value=AIConfig(api_key="test-key"),
+            ):
+                runner = CliRunner()
+                result = runner.invoke(
+                    app,
+                    ["chat"],
+                    input="今天买菜45块\ny\nquit\n",
+                )
+
+        assert result.exit_code == 0
+
+        # Verify the transaction was actually written to DB
+        conn = sqlite3.connect(str(cfg.DB_FILE))
+        rows = conn.execute("SELECT * FROM transactions").fetchall()
+        conn.close()
+
+        assert len(rows) == 1
+        row = rows[0]
+        assert row[4] == "45.0"   # amount column (index 4)
+        assert row[5] == "支出"    # type column (index 5)
+        assert row[6] == "餐饮"    # category column (index 6)
+
 
 # ---------------------------------------------------------------------------
 # Reuse isolated_data_dir fixture
