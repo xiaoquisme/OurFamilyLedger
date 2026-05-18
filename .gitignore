@@ -64,3 +64,6 @@ secrets.json
 .claude/plans/
 .claude-trace/
 CLAUDE.md
+.venv/
+__pycache__/
+*.egg-info/
