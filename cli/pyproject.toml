@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "our-family-ledger"
+version = "0.1.0"
+description = "Family expense tracker CLI backed by SQLite"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.9",
+    "rich>=13",
+]
+
+[project.scripts]
+ledger = "our_family_ledger.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["our_family_ledger*"]
+
+[tool.ruff]
+line-length = 100

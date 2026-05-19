@@ -64,3 +64,20 @@ secrets.json
 .claude/plans/
 .claude-trace/
 CLAUDE.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.py[cod]
+.venv/
+cli/.venv/
+cli/__pycache__/
+cli/*.egg-info/
+cli/.pytest_cache/
+cli/**/__pycache__/
+*.egg-info/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
